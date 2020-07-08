@@ -2,6 +2,15 @@
 
 namespace VatIDChecker
 {
+    public class ValidationParams
+    {
+        public string valid { get; set; }
+        public string name { get; set; }
+        public string address { get; set; }
+        public string cCode { get; set; }
+        public string vatNum { get; set; }
+    }
+    
     public class Tax
     {
         public string name { get; set; }

@@ -19,6 +19,7 @@ namespace VatIDChecker
     public class VatIDCheck
     {
         private readonly HttpClient client;
+        public ValidationParams valParam = new ValidationParams();
 
         public VatIDCheck(IHttpClientFactory clientFactory)
         {
@@ -48,9 +49,86 @@ namespace VatIDChecker
             var city = billomatClient.city;
             var clientAddress = street + " " + countryCode + "-" + zip + " " + city;
 
+            var xmlContent = await PostXMLToEU(countryCode, vatNumber);
+            var soapResponse = XDocument.Parse(xmlContent.ToString());
+            GetValidEUParam(soapResponse);
+
+            // UST_ID Validation
+            var userResponse = string.Empty;
+            if (valParam.valid == null)
+            {
+                userResponse = "Not found";
+            }
+            else
+            {
+                if (valParam.valid == "true")
+                {
+                    if ((valParam.name != null) && (valParam.name.ToLower().Replace("\n", " ") == clientName.ToLower().Replace("\n", " ")) && (valParam.name != "---"))
+                    {
+                        userResponse = "Correct company name: " + valParam.name;
+                    }
+                    else
+                    {
+                        userResponse += "Company name not valid";
+                    }
+                    if ((valParam.address != null) && (valParam.address.ToLower().Replace("\n", " ") == clientAddress.ToLower().Replace("\n", " ")) && (valParam.address != "---"))
+                    {
+                        userResponse += "\nCorrect address: " + valParam.address.Replace("\n", " ");
+                    }
+                    else
+                    {
+                        userResponse += "\nAddress not valid";
+                    }
+                    if ((valParam.cCode != null) && (valParam.cCode != "---") && (valParam.cCode == countryCode))
+                    {
+                        userResponse += "\nCorrect country code: " + valParam.cCode;
+                    }
+                    else
+                    {
+                        userResponse += "\nCountry Code not valid";
+                    }
+                    if ((valParam.vatNum != null) && (valParam.vatNum != "---") && (valParam.vatNum == vatNumber))
+                    {
+                        userResponse += "\nCorrect vat-number: " + valParam.vatNum;
+                    }
+                    else
+                    {
+                        userResponse += "\nVatNumber not valid";
+                    }
+                }
+                else
+                {
+                    userResponse = "Not valid";
+                }
+            }
+            return new OkObjectResult(userResponse);
+        }
+        private void GetValidEUParam(XDocument soapRes)
+        {
+            var nameTable = new NameTable();
+            var nsManager = new XmlNamespaceManager(nameTable);
+            nsManager.AddNamespace("x", "urn:ec.europa.eu:taxud:vies:services:checkVat:types");
+            nsManager.AddNamespace("soap", "http://schemas.xmlsoap.org/soap/envelope/");
+
+            valParam.valid = (string)soapRes.XPathSelectElement("//soap:Body/x:checkVatResponse/x:valid", nsManager);
+            valParam.name = (string)soapRes.XPathSelectElement("//soap:Body/x:checkVatResponse/x:name", nsManager);
+            valParam.address = (string)soapRes.XPathSelectElement("//soap:Body/x:checkVatResponse/x:address", nsManager);
+            valParam.cCode = (string)soapRes.XPathSelectElement("//soap:Body/x:checkVatResponse/x:countryCode", nsManager);
+            valParam.vatNum = (string)soapRes.XPathSelectElement("//soap:Body/x:checkVatResponse/x:vatNumber", nsManager);
+        }
+        private async Task<string> GetClientIdFromRequestBody(Stream body)
+        {
+            var requestBody = await new StreamReader(body).ReadToEndAsync();
+            var invoiceObject = JsonSerializer.Deserialize<InvoiceObject>(requestBody);
+            var clientId = invoiceObject?.invoice?.client_id;
+            return clientId;
+        }
+
+        private async Task<string> PostXMLToEU(string countryCode, string vatNumber)
+        {
             // POST Request
             const string urlEu = "http://ec.europa.eu/taxation_customs/vies/services/checkVatService";
-            
+
             var webPostRequest = new HttpRequestMessage
             {
                 RequestUri = new Uri(urlEu),
@@ -71,81 +149,11 @@ namespace VatIDChecker
                             </soap:Body>
                         </soap:Envelope>")
             };
-            
+
             var postResponse = await client.SendAsync(webPostRequest);
             var postContent = postResponse.Content;
             var postXmlContent = postContent.ReadAsStringAsync().Result;
-
-            var nameTable = new NameTable();
-            var nsManager = new XmlNamespaceManager(nameTable);
-            nsManager.AddNamespace("x", "urn:ec.europa.eu:taxud:vies:services:checkVat:types");
-            nsManager.AddNamespace("soap", "http://schemas.xmlsoap.org/soap/envelope/");
-
-            //var soapResponse = XDocument.Parse(postData);
-            var soapResponse = XDocument.Parse(postXmlContent);
-
-            var valid = soapResponse.XPathSelectElement("//soap:Body/x:checkVatResponse/x:valid", nsManager);
-            var name = soapResponse.XPathSelectElement("//soap:Body/x:checkVatResponse/x:name", nsManager);
-            var address = soapResponse.XPathSelectElement("//soap:Body/x:checkVatResponse/x:address", nsManager);
-            var cCode = soapResponse.XPathSelectElement("//soap:Body/x:checkVatResponse/x:countryCode", nsManager);
-            var vatNum = soapResponse.XPathSelectElement("//soap:Body/x:checkVatResponse/x:vatNumber", nsManager);
-
-            // UST_ID Validation
-            var userResponse = string.Empty;
-            if (valid == null)
-            {
-                userResponse = "Not found";
-            }
-            else
-            {
-                if (valid.Value == "true")
-                {
-                    if ((name != null) && (name.Value.ToLower().Replace("\n", " ") == clientName.ToLower().Replace("\n", " ")) && (name.Value != "---"))
-                    {
-                        userResponse = "Correct company name: " + name.Value;
-                    }
-                    else
-                    {
-                        userResponse += "Company name not valid";
-                    }
-                    if ((address != null) && (address.Value.ToLower().Replace("\n", " ") == clientAddress.ToLower().Replace("\n", " ")) && (address.Value != "---"))
-                    {
-                        userResponse += "\nCorrect address: " + address.Value.Replace("\n", " ");
-                    }
-                    else
-                    {
-                        userResponse += "\nAddress not valid";
-                    }
-                    if ((cCode != null) && (cCode.Value != "---"))
-                    {
-                        userResponse += "\nCorrect country code: " + cCode.Value;
-                    }
-                    else
-                    {
-                        userResponse += "\nCountry Code not valid";
-                    }
-                    if ((vatNum != null) && (vatNum.Value != "---"))
-                    {
-                        userResponse += "\nCorrect vat-number: " + vatNum.Value;
-                    }
-                    else
-                    {
-                        userResponse += "\nVatNumber not valid";
-                    }
-                }
-                else
-                {
-                    userResponse = "Not valid";
-                }
-            }
-            return new OkObjectResult(userResponse);
-        }
-        private async Task<string> GetClientIdFromRequestBody(Stream body)
-        {
-            var requestBody = await new StreamReader(body).ReadToEndAsync();
-            var invoiceObject = JsonSerializer.Deserialize<InvoiceObject>(requestBody);
-            var clientId = invoiceObject?.invoice?.client_id;
-            return clientId;
+            return postXmlContent;
         }
 
         private async Task<Client> GetClientFromBillomat(string clientId)
