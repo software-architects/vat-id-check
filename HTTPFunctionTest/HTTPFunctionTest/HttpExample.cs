@@ -33,37 +33,31 @@ namespace HTTPFunctionTest
         {
             log.LogInformation("C# HTTP trigger function processed a request.");
 
-            XmlDocument doc = new XmlDocument();
-            XmlElement child = doc.CreateElement("Child");
-            child.InnerText = "child contents";
-            XmlElement root = doc.CreateElement("Root");
-            root.AppendChild(child);
-            doc.AppendChild(root);
+            //GET JSON from Body Request
+            var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+
+            InvoiceObject invoiceObject = DeserializeInvoice(requestBody);
+            var clientId = invoiceObject.invoice.client_id;
 
             //Billomat GET Request
             //URL: https://{BillomatID}.billomat.net/api/clients/{string}
-            var webGetRequest = (HttpWebRequest)WebRequest.Create("https://softarchmelinatest.billomat.net/api/clients/3666450");
+            var url = $"https://softarchmelinatest.billomat.net/api/clients/{clientId}";
+            var webGetRequest = (HttpWebRequest)WebRequest.Create(url);
             webGetRequest.ContentType = "application/json;charset='utf-8'";
             webGetRequest.Accept = "application/json";
             webGetRequest.Timeout = 1000000000;
             webGetRequest.Method = "GET";
 
-            var apiKey = System.Environment.GetEnvironmentVariable("BILLOMATID", EnvironmentVariableTarget.Process);
+            var apiKey = Environment.GetEnvironmentVariable("BILLOMATID", EnvironmentVariableTarget.Process);
+
             //API_KEY
             webGetRequest.Headers.Add("X-BillomatApiKey", apiKey);
 
             var getResponse = webGetRequest.GetResponse();
             var readGetStream = new StreamReader(getResponse.GetResponseStream(), Encoding.UTF8);
-            var getData = "";
-            getData = readGetStream.ReadLine();
+            var getData = readGetStream.ReadLine();
 
-            ClientObject clientObject = Deserialize(getData);
-
-            //From JSON to Object in ClientObject
-            ClientObject Deserialize(string jsonString)
-            {
-                return System.Text.Json.JsonSerializer.Deserialize<ClientObject>(jsonString);
-            }
+            ClientObject clientObject = DeserializeClient(getData);
 
             var countryCode = clientObject.client.country_code;
             var vatNumber = clientObject.client.vat_number.Substring(2).Replace(" ", string.Empty);
@@ -84,7 +78,7 @@ namespace HTTPFunctionTest
             webRequest.Method = "POST";
             webRequest.Headers.Add("SOAPAction", "http://ec.europa.eu/taxation_customs/vies/services/checkVatService");
 
-            //Send JSON 
+            //Send XML
             var requestContent = Encoding.UTF8.GetBytes(@"<?xml version='1.0' encoding='utf-8'?>
             <soap:Envelope xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns:xsd='http://www.w3.org/2001/XMLSchema' xmlns:soap='http://schemas.xmlsoap.org/soap/envelope/'>
                 <soap:Body>
@@ -94,6 +88,7 @@ namespace HTTPFunctionTest
                     </checkVat>
                 </soap:Body>
             </soap:Envelope>");
+
             var request = webRequest.GetRequestStream();
             request.Write(requestContent, 0, requestContent.Length);
             var postResponse = webRequest.GetResponse();
@@ -168,6 +163,62 @@ namespace HTTPFunctionTest
 
             return new OkObjectResult(userResponse);
         }
+
+        // Root myDeserializedClass = JsonConvert.DeserializeObject<Root>(myJsonResponse); 
+        public class Tax
+        {
+            public string name { get; set; }
+            public string rate { get; set; }
+            public string amount { get; set; }
+        }
+        public class Taxes
+        {
+            public Tax tax { get; set; }
+        }
+        public class Invoice
+        {
+            public string id { get; set; }
+            public string client_id { get; set; }
+            public string contact_id { get; set; }
+            public DateTime created { get; set; }
+            public string invoice_number { get; set; }
+            public string number { get; set; }
+            public string number_pre { get; set; }
+            public string status { get; set; }
+            public string date { get; set; }
+            public string supply_date { get; set; }
+            public string supply_date_type { get; set; }
+            public string due_date { get; set; }
+            public string due_days { get; set; }
+            public string address { get; set; }
+            public string discount_rate { get; set; }
+            public string discount_date { get; set; }
+            public string discount_days { get; set; }
+            public string discount_amount { get; set; }
+            public string label { get; set; }
+            public string intro { get; set; }
+            public string note { get; set; }
+            public string total_gross { get; set; }
+            public string total_net { get; set; }
+            public string net_gross { get; set; }
+            public string reduction { get; set; }
+            public string total_gross_unreduced { get; set; }
+            public string total_net_unreduced { get; set; }
+            public string paid_amount { get; set; }
+            public string open_amount { get; set; }
+            public string currency_code { get; set; }
+            public string quote { get; set; }
+            public string offer_id { get; set; }
+            public string confirmation_id { get; set; }
+            public string recurring_id { get; set; }
+            public Taxes taxes { get; set; }
+            public string payment_types { get; set; }
+
+        }
+        public class InvoiceObject
+        {
+            public Invoice invoice { get; set; }
+        }
         public class ClientObject
         {
             public Client client { get; set; }
@@ -233,6 +284,16 @@ namespace HTTPFunctionTest
             public string revenue_net { get; set; }
             public string customfield { get; set; }
             public string client_property_values { get; set; }
+        }
+
+        //From JSON string to Object in ClientObject
+        public static InvoiceObject DeserializeInvoice(string jsonString)
+        {
+            return System.Text.Json.JsonSerializer.Deserialize<InvoiceObject>(jsonString);
+        }
+        public static ClientObject DeserializeClient(string jsonString)
+        {
+            return System.Text.Json.JsonSerializer.Deserialize<ClientObject>(jsonString);
         }
     }
 }
