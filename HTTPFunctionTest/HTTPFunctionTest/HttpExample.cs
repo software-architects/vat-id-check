@@ -6,40 +6,40 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using RestSharp;
 using System.Text;
 using System.Net;
 using System.Xml.Linq;
-using System.IO;
 using System.Xml.XPath;
-using Newtonsoft.Json.Linq;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using Newtonsoft.Json;
 using System.Xml;
+using System.Text.Json;
 using System.Net.Http;
-using Microsoft.Azure.WebJobs.Host;
 
 namespace HTTPFunctionTest
 {
-    public static class HttpExample
+    public class HttpExample
     {
+        private readonly HttpClient client;
+
+        public HttpExample(IHttpClientFactory clientFactory)
+        {
+            client = clientFactory.CreateClient();
+        }
+
         [FunctionName("HttpExample")]
-        public static async Task<IActionResult> Run(
+        public async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req,
             ILogger log)
         {
-            log.LogInformation("C# HTTP trigger function processed a request.");
+            // For details about the structure of the HTTP request sent
+            // from Billomat see https://www.billomat.com/api/webhooks/.
+            var clientId = await GetClientIdFromRequestBody(req.Body);
+            if (string.IsNullOrEmpty(clientId))
+            {
+                log.LogError("Cannot find client id in JSON body.");
+                return new BadRequestResult();
+            }
 
-            //GET JSON from Body Request
-            var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-
-            InvoiceObject invoiceObject = DeserializeInvoice(requestBody);
-            var clientId = invoiceObject.invoice.client_id;
-
-            //Billomat GET Request
+            //Billomat GET Request. For details see https://www.billomat.com/api/kunden/.
             //URL: https://{BillomatID}.billomat.net/api/clients/{string}
             var url = $"https://softarchmelinatest.billomat.net/api/clients/{clientId}";
             var webGetRequest = (HttpWebRequest)WebRequest.Create(url);
@@ -104,7 +104,6 @@ namespace HTTPFunctionTest
             nsManager.AddNamespace("soap", "http://schemas.xmlsoap.org/soap/envelope/");
 
             var soapResponse = XDocument.Parse(postData);
-            var ns = soapResponse.Root.Name.Namespace;
 
             var valid = soapResponse.XPathSelectElement("//soap:Body/x:checkVatResponse/x:valid", nsManager);
             var name = soapResponse.XPathSelectElement("//soap:Body/x:checkVatResponse/x:name", nsManager);
@@ -162,6 +161,14 @@ namespace HTTPFunctionTest
             }
 
             return new OkObjectResult(userResponse);
+        }
+
+        private static async Task<string> GetClientIdFromRequestBody(Stream body)
+        {
+            var requestBody = await new StreamReader(body).ReadToEndAsync();
+            var invoiceObject = JsonSerializer.Deserialize<InvoiceObject>(requestBody);
+            var clientId = invoiceObject?.invoice?.client_id;
+            return clientId;
         }
 
         // Root myDeserializedClass = JsonConvert.DeserializeObject<Root>(myJsonResponse); 
@@ -289,7 +296,7 @@ namespace HTTPFunctionTest
         //From JSON string to Object in ClientObject
         public static InvoiceObject DeserializeInvoice(string jsonString)
         {
-            return System.Text.Json.JsonSerializer.Deserialize<InvoiceObject>(jsonString);
+            return JsonSerializer.Deserialize<InvoiceObject>(jsonString);
         }
         public static ClientObject DeserializeClient(string jsonString)
         {
