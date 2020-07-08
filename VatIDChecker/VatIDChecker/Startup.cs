@@ -1,7 +1,9 @@
 ﻿using Microsoft.Azure.Functions.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace HTTPFunctionTest
+[assembly: FunctionsStartup(typeof(VatIDChecker.Startup))]
+
+namespace VatIDChecker
 {
     public class Startup : FunctionsStartup
     {

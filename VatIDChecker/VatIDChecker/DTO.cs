@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace HttpFunctionTest
+namespace VatIDChecker
 {
     class DTO
     {
@@ -124,6 +124,5 @@ namespace HttpFunctionTest
             public string customfield { get; set; }
             public string client_property_values { get; set; }
         }
-
     }
 }

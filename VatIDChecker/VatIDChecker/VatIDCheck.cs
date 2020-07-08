@@ -1,31 +1,31 @@
-using System;
-using System.IO;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using System.Text;
+using System;
+using System.IO;
 using System.Net;
+using System.Net.Http;
+using System.Text;
+using System.Text.Json;
+using System.Threading.Tasks;
+using System.Xml;
 using System.Xml.Linq;
 using System.Xml.XPath;
-using System.Xml;
-using System.Text.Json;
-using System.Net.Http;
 
-namespace HttpFunctionTest
+namespace VatIDChecker
 {
-    public class HttpExample
+    public class VatIDCheck
     {
         private readonly HttpClient client;
 
-        public HttpExample(IHttpClientFactory clientFactory)
+        public VatIDCheck(IHttpClientFactory clientFactory)
         {
             client = clientFactory.CreateClient();
         }
 
-        [FunctionName("HttpExample")]
+        [FunctionName("VatIDCheck")]
         public async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req,
             ILogger log)
@@ -44,6 +44,7 @@ namespace HttpFunctionTest
             var url = $"https://softarchmelinatest.billomat.net/api/clients/{clientId}";
             var apiKey = Environment.GetEnvironmentVariable("BILLOMATID", EnvironmentVariableTarget.Process);
 
+            // Send Header Information via await client.SendAsync(webGetRequest)
             var webGetRequest = new HttpRequestMessage
             {
                 RequestUri = new Uri(url),
@@ -56,22 +57,11 @@ namespace HttpFunctionTest
                 },
             };
 
-            /*
-            var webGetRequest = (HttpWebRequest)WebRequest.Create(url);
-            webGetRequest.ContentType = "application/json;charset='utf-8'";
-            webGetRequest.Accept = "application/json";
-            webGetRequest.Timeout = 1000000000;
-            webGetRequest.Method = "GET";
-
-            API_KEY
-            webGetRequest.Headers.Add("X-BillomatApiKey", apiKey);
-            */
-
             var getResponse = await client.SendAsync(webGetRequest);
-            var readGetStream = new StreamReader(getResponse.ToString(), Encoding.UTF8);
-            var getData = readGetStream.ReadLine();
+            var getContent = getResponse.Content;
+            var getJsonContent = getContent.ReadAsStringAsync().Result;
 
-            var clientObject = JsonSerializer.Deserialize<DTO.ClientObject>(getData);
+            var clientObject = JsonSerializer.Deserialize<DTO.ClientObject>(getJsonContent);
 
             var countryCode = clientObject.client.country_code;
             var vatNumber = clientObject.client.vat_number.Substring(2).Replace(" ", string.Empty);
@@ -81,7 +71,6 @@ namespace HttpFunctionTest
             var city = clientObject.client.city;
             var clientAddress = street + " " + countryCode + "-" + zip + " " + city;
 
-            readGetStream.Close();
             getResponse.Dispose();
 
             // POST Request
