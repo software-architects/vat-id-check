@@ -7,6 +7,7 @@ using System;
 using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -53,13 +54,19 @@ namespace VatIDChecker
 
                 var xmlContent = await PostXMLToEU(countryCode, vatNumber);
                 var soapResponse = XDocument.Parse(xmlContent.ToString());
+                
                 var valParam = GetValidEUParam(soapResponse);
 
+
                 // UST_ID Validation
-                var userResponse = string.Empty;
+                var userResponse = string.Empty; 
+                var validStatus = Environment.GetEnvironmentVariable("VALIDSTATUS", EnvironmentVariableTarget.Process);
+
+                var strStatus = "";
                 if (valParam.valid == null)
                 {
                     userResponse = "Not found";
+                    strStatus = "Not found";
                 }
                 else
                 {
@@ -72,6 +79,7 @@ namespace VatIDChecker
                         else
                         {
                             userResponse += "Company name not valid";
+                            strStatus += "\nCompany name not valid";
                         }
                         if ((valParam.address != null) && (valParam.address.ToLower().Replace("\n", " ") == clientAddress.ToLower().Replace("\n", " ")) && (valParam.address != "---"))
                         {
@@ -80,6 +88,7 @@ namespace VatIDChecker
                         else
                         {
                             userResponse += "\nAddress not valid";
+                            strStatus += "\nAddress not valid";
                         }
                         if ((valParam.cCode != null) && (valParam.cCode != "---") && (valParam.cCode == countryCode))
                         {
@@ -88,6 +97,7 @@ namespace VatIDChecker
                         else
                         {
                             userResponse += "\nCountry Code not valid";
+                            strStatus += "\nCountry Code not valid";
                         }
                         if ((valParam.vatNum != null) && (valParam.vatNum != "---") && (valParam.vatNum == vatNumber))
                         {
@@ -96,13 +106,20 @@ namespace VatIDChecker
                         else
                         {
                             userResponse += "\nVatNumber not valid";
+                            strStatus += "\nVatNumber not valid";
                         }
                     }
                     else
                     {
                         userResponse = "Not valid";
+                        strStatus = "Not valid";
                     }
                 }
+                if(strStatus == "")
+                {
+                    strStatus = "Everything is fine";
+                }
+                var st = await PostToSlack(strStatus);
                 return new OkObjectResult(userResponse);
             }
             catch (Exception ex)
@@ -140,6 +157,29 @@ namespace VatIDChecker
             return clientId;
         }
 
+        private async Task<string> PostToSlack(string var)
+        {
+            var urlSlack = @"https://slack.com/api/chat.postMessage";
+            var slackAuthorization = Environment.GetEnvironmentVariable("SLACKAUTHORIZATIONKEY", EnvironmentVariableTarget.Process);
+            var slackPostRequest = new HttpRequestMessage
+            {
+                RequestUri = new Uri(urlSlack),
+                Method = HttpMethod.Post,
+                Headers = {
+                    { "Authorization", slackAuthorization },
+                    { HttpRequestHeader.Accept.ToString(), "application/json" },
+                    { "Timeout", "1000000000" },
+                },
+                Content = new StringContent(
+                    JsonSerializer.Serialize(new { channel = "demo", text = $"<@U02FJAB8A> {var} :tada:" }), Encoding.UTF8, "application/json")
+            };
+
+            var postResponse = await client.SendAsync(slackPostRequest);
+            postResponse.EnsureSuccessStatusCode();
+            var postContent = postResponse.Content;
+            var postXmlContent = postContent.ReadAsStringAsync().Result;
+            return postXmlContent;
+        }
         private async Task<string> PostXMLToEU(string countryCode, string vatNumber)
         {
             // POST Request
@@ -182,7 +222,7 @@ namespace VatIDChecker
             var apiKey = Environment.GetEnvironmentVariable("APIKEY", EnvironmentVariableTarget.Process);
             var billomatID = Environment.GetEnvironmentVariable("BILLOMATID", EnvironmentVariableTarget.Process);
             var urlClient = $"https://{billomatID}.billomat.net/api/clients/{clientId}";
-            
+
 
             // Send Header Information via await client.SendAsync(webGetRequest)
             var webGetRequest = new HttpRequestMessage
