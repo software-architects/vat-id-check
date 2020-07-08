@@ -41,13 +41,13 @@ namespace VatIDChecker
 
             // Billomat GET Request. For details see https://www.billomat.com/api/kunden/.
             // URL: https://{BillomatID}.billomat.net/api/clients/{string}
-            var url = $"https://softarchmelinatest.billomat.net/api/clients/{clientId}";
+            var urlClient = $"https://softarchmelinatest.billomat.net/api/clients/{clientId}";
             var apiKey = Environment.GetEnvironmentVariable("BILLOMATID", EnvironmentVariableTarget.Process);
 
             // Send Header Information via await client.SendAsync(webGetRequest)
             var webGetRequest = new HttpRequestMessage
             {
-                RequestUri = new Uri(url),
+                RequestUri = new Uri(urlClient),
                 Method = HttpMethod.Get,
                 Headers = {
                     { "X-BillomatApiKey", apiKey },
@@ -74,12 +74,41 @@ namespace VatIDChecker
             getResponse.Dispose();
 
             // POST Request
-            var webRequest = (HttpWebRequest)WebRequest.Create("http://ec.europa.eu/taxation_customs/vies/services/checkVatService");
-            webRequest.ContentType = "text/xml;charset='utf-8'";
-            webRequest.Accept = "text/xml";
-            webRequest.Timeout = 1000000000;
-            webRequest.Method = "POST";
-            webRequest.Headers.Add("SOAPAction", "http://ec.europa.eu/taxation_customs/vies/services/checkVatService");
+            var urlEu = @"http://ec.europa.eu/taxation_customs/vies/services/checkVatService";
+            var urlCheck = @"http://ec.europa.eu/taxation_customs/vies/services/checkVatService";
+            
+            var webPostRequest = new HttpRequestMessage
+            {
+                RequestUri = new Uri(urlEu),
+                Method = HttpMethod.Post,
+                Headers = {
+                    { "SOAPAction", urlCheck},
+                    { HttpRequestHeader.ContentType.ToString(), "text/xml;charset='utf-8'"},
+                    { HttpRequestHeader.Accept.ToString(), "text/xml" },
+                    { "Timeout", "1000000000"},
+                },
+                Content = new StringContent(@"<?xml version='1.0' encoding='utf-8'?>
+                        <soap:Envelope xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns:xsd='http://www.w3.org/2001/XMLSchema' xmlns:soap='http://schemas.xmlsoap.org/soap/envelope/'>
+                            <soap:Body>
+                                <checkVat xmlns='urn:ec.europa.eu:taxud:vies:services:checkVat:types'>
+                                    <countryCode>" + countryCode + @"</countryCode>
+                                    <vatNumber>" + vatNumber + @"</vatNumber>
+                                </checkVat>
+                            </soap:Body>
+                        </soap:Envelope>")
+            };
+            
+            var postResponse = await client.SendAsync(webPostRequest);
+            var postContent = postResponse.Content;
+            var postXmlContent = postContent.ReadAsStringAsync().Result;
+
+            /*
+            var webPostRequest = (HttpWebRequest)WebRequest.Create(urlEu);
+            webPostRequest.ContentType = "text/xml;charset='utf-8'";
+            webPostRequest.Accept = "text/xml";
+            webPostRequest.Timeout = 1000000000;
+            webPostRequest.Method = "POST";
+            webPostRequest.Headers.Add("SOAPAction", urlCheck);
 
             // Send XML
             var requestContent = Encoding.UTF8.GetBytes(@"<?xml version='1.0' encoding='utf-8'?>
@@ -92,21 +121,22 @@ namespace VatIDChecker
                 </soap:Body>
             </soap:Envelope>");
 
-            var request = webRequest.GetRequestStream();
-            request.Write(requestContent, 0, requestContent.Length);
-            var postResponse = webRequest.GetResponse();
+            var postRequest = webPostRequest.GetRequestStream();
+            postRequest.Write(requestContent, 0, requestContent.Length);
+            var postResponse = webPostRequest.GetResponse();
             var readPostStream = new StreamReader(postResponse.GetResponseStream(), Encoding.UTF8);
             var postData = readPostStream.ReadToEnd();
 
             readPostStream.Close();
             postResponse.Close();
-
+            */
             var nameTable = new NameTable();
             var nsManager = new XmlNamespaceManager(nameTable);
             nsManager.AddNamespace("x", "urn:ec.europa.eu:taxud:vies:services:checkVat:types");
             nsManager.AddNamespace("soap", "http://schemas.xmlsoap.org/soap/envelope/");
 
-            var soapResponse = XDocument.Parse(postData);
+            //var soapResponse = XDocument.Parse(postData);
+            var soapResponse = XDocument.Parse(postXmlContent);
 
             var valid = soapResponse.XPathSelectElement("//soap:Body/x:checkVatResponse/x:valid", nsManager);
             var name = soapResponse.XPathSelectElement("//soap:Body/x:checkVatResponse/x:name", nsManager);
@@ -114,7 +144,7 @@ namespace VatIDChecker
             var cCode = soapResponse.XPathSelectElement("//soap:Body/x:checkVatResponse/x:countryCode", nsManager);
             var vatNum = soapResponse.XPathSelectElement("//soap:Body/x:checkVatResponse/x:vatNumber", nsManager);
 
-            // Validation
+            // UST_ID Validation
             var userResponse = string.Empty;
             if (valid == null)
             {
@@ -162,10 +192,8 @@ namespace VatIDChecker
                     userResponse = "Not valid";
                 }
             }
-
             return new OkObjectResult(userResponse);
         }
-
         private static async Task<string> GetClientIdFromRequestBody(Stream body)
         {
             var requestBody = await new StreamReader(body).ReadToEndAsync();
@@ -173,7 +201,6 @@ namespace VatIDChecker
             var clientId = invoiceObject?.invoice?.client_id;
             return clientId;
         }
-
     }
 }
 
