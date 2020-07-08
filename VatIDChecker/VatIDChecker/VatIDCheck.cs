@@ -74,50 +74,50 @@ namespace VatIDChecker
                     {
                         if ((valParam.name != null) && (valParam.name.ToLower().Replace("\n", " ") == clientName.ToLower().Replace("\n", " ")) && (valParam.name != "---"))
                         {
-                            userResponse = "Correct company name: " + valParam.name;
+                            userResponse = "\nCorrect company name: " + valParam.name;
+                            strStatus = "\nCorrect company name: " + valParam.name;
                         }
                         else
                         {
-                            userResponse += "Company name not valid";
-                            strStatus += "\nCompany name not valid";
+                            userResponse += "\nCompany name not valid";
+                            strStatus += "\nIncorrect company name: " + valParam.name;
                         }
                         if ((valParam.address != null) && (valParam.address.ToLower().Replace("\n", " ") == clientAddress.ToLower().Replace("\n", " ")) && (valParam.address != "---"))
                         {
                             userResponse += "\nCorrect address: " + valParam.address.Replace("\n", " ");
+                            strStatus += "\nCorrect address: " + valParam.address.Replace("\n", " ");
                         }
                         else
                         {
                             userResponse += "\nAddress not valid";
-                            strStatus += "\nAddress not valid";
+                            strStatus += "\nIncorrect Address: " + valParam.address.Replace("\n", " ");
                         }
                         if ((valParam.cCode != null) && (valParam.cCode != "---") && (valParam.cCode == countryCode))
                         {
                             userResponse += "\nCorrect country code: " + valParam.cCode;
+                            strStatus += "\nCorrect Correct country : " + valParam.cCode;
                         }
                         else
                         {
                             userResponse += "\nCountry Code not valid";
-                            strStatus += "\nCountry Code not valid";
+                            strStatus += "\nIncorrect Country Code: " + valParam.cCode;
                         }
                         if ((valParam.vatNum != null) && (valParam.vatNum != "---") && (valParam.vatNum == vatNumber))
                         {
                             userResponse += "\nCorrect vat-number: " + valParam.vatNum;
+                            strStatus += "\nCorrect vat-number: " + valParam.vatNum;
                         }
                         else
                         {
                             userResponse += "\nVatNumber not valid";
-                            strStatus += "\nVatNumber not valid";
+                            strStatus += "\nIncorrect vat-number: " + valParam.vatNum;
                         }
                     }
                     else
                     {
-                        userResponse = "Not valid";
-                        strStatus = "Not valid";
+                        userResponse = "\nNot valid";
+                        strStatus = "\nEverything's incorrect :thumbs_down:";
                     }
-                }
-                if(strStatus == "")
-                {
-                    strStatus = "Everything is fine";
                 }
                 var st = await PostToSlack(strStatus);
                 return new OkObjectResult(userResponse);
@@ -171,7 +171,7 @@ namespace VatIDChecker
                     { "Timeout", "1000000000" },
                 },
                 Content = new StringContent(
-                    JsonSerializer.Serialize(new { channel = "demo", text = $"<@U02FJAB8A> {var} :tada:" }), Encoding.UTF8, "application/json")
+                    JsonSerializer.Serialize(new { channel = "demo", text = $"<@U02FJAB8A> {var}" }), Encoding.UTF8, "application/json")
             };
 
             var postResponse = await client.SendAsync(slackPostRequest);
