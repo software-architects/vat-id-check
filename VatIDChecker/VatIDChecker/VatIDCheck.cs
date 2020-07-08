@@ -178,8 +178,11 @@ namespace VatIDChecker
         {
             // Billomat GET Request. For details see https://www.billomat.com/api/kunden/.
             // URL: https://{BillomatID}.billomat.net/api/clients/{string}
-            var urlClient = $"https://softarchmelinatest.billomat.net/api/clients/{clientId}";
-            var apiKey = Environment.GetEnvironmentVariable("BILLOMATID", EnvironmentVariableTarget.Process);
+
+            var apiKey = Environment.GetEnvironmentVariable("APIKEY", EnvironmentVariableTarget.Process);
+            var billomatID = Environment.GetEnvironmentVariable("BILLOMATID", EnvironmentVariableTarget.Process);
+            var urlClient = $"https://{billomatID}.billomat.net/api/clients/{clientId}";
+            
 
             // Send Header Information via await client.SendAsync(webGetRequest)
             var webGetRequest = new HttpRequestMessage
