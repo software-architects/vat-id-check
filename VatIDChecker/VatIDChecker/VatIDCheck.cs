@@ -39,50 +39,24 @@ namespace VatIDChecker
                 return new BadRequestResult();
             }
 
-            // Billomat GET Request. For details see https://www.billomat.com/api/kunden/.
-            // URL: https://{BillomatID}.billomat.net/api/clients/{string}
-            var urlClient = $"https://softarchmelinatest.billomat.net/api/clients/{clientId}";
-            var apiKey = Environment.GetEnvironmentVariable("BILLOMATID", EnvironmentVariableTarget.Process);
-
-            // Send Header Information via await client.SendAsync(webGetRequest)
-            var webGetRequest = new HttpRequestMessage
-            {
-                RequestUri = new Uri(urlClient),
-                Method = HttpMethod.Get,
-                Headers = {
-                    { "X-BillomatApiKey", apiKey },
-                    { HttpRequestHeader.ContentType.ToString(), "application/json;charset='utf-8'"},
-                    { HttpRequestHeader.Accept.ToString(), "application/json" },
-                    { "Timeout", "1000000000"},
-                },
-            };
-
-            var getResponse = await client.SendAsync(webGetRequest);
-            var getContent = getResponse.Content;
-            var getJsonContent = getContent.ReadAsStringAsync().Result;
-
-            var clientObject = JsonSerializer.Deserialize<DTO.ClientObject>(getJsonContent);
-
-            var countryCode = clientObject.client.country_code;
-            var vatNumber = clientObject.client.vat_number.Substring(2).Replace(" ", string.Empty);
-            var clientName = clientObject.client.name;
-            var street = clientObject.client.street;
-            var zip = clientObject.client.zip;
-            var city = clientObject.client.city;
+            var billomatClient = await GetClientFromBillomat(clientId);
+            var countryCode = billomatClient.country_code;
+            var vatNumber = billomatClient.vat_number.Substring(2).Replace(" ", string.Empty);
+            var clientName = billomatClient.name;
+            var street = billomatClient.street;
+            var zip = billomatClient.zip;
+            var city = billomatClient.city;
             var clientAddress = street + " " + countryCode + "-" + zip + " " + city;
 
-            getResponse.Dispose();
-
             // POST Request
-            var urlEu = @"http://ec.europa.eu/taxation_customs/vies/services/checkVatService";
-            var urlCheck = @"http://ec.europa.eu/taxation_customs/vies/services/checkVatService";
+            const string urlEu = "http://ec.europa.eu/taxation_customs/vies/services/checkVatService";
             
             var webPostRequest = new HttpRequestMessage
             {
                 RequestUri = new Uri(urlEu),
                 Method = HttpMethod.Post,
                 Headers = {
-                    { "SOAPAction", urlCheck},
+                    { "SOAPAction", urlEu},
                     { HttpRequestHeader.ContentType.ToString(), "text/xml;charset='utf-8'"},
                     { HttpRequestHeader.Accept.ToString(), "text/xml" },
                     { "Timeout", "1000000000"},
@@ -102,34 +76,6 @@ namespace VatIDChecker
             var postContent = postResponse.Content;
             var postXmlContent = postContent.ReadAsStringAsync().Result;
 
-            /*
-            var webPostRequest = (HttpWebRequest)WebRequest.Create(urlEu);
-            webPostRequest.ContentType = "text/xml;charset='utf-8'";
-            webPostRequest.Accept = "text/xml";
-            webPostRequest.Timeout = 1000000000;
-            webPostRequest.Method = "POST";
-            webPostRequest.Headers.Add("SOAPAction", urlCheck);
-
-            // Send XML
-            var requestContent = Encoding.UTF8.GetBytes(@"<?xml version='1.0' encoding='utf-8'?>
-            <soap:Envelope xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns:xsd='http://www.w3.org/2001/XMLSchema' xmlns:soap='http://schemas.xmlsoap.org/soap/envelope/'>
-                <soap:Body>
-                    <checkVat xmlns='urn:ec.europa.eu:taxud:vies:services:checkVat:types'>
-                        <countryCode>" + countryCode + @"</countryCode>
-                        <vatNumber>" + vatNumber + @"</vatNumber>
-                    </checkVat>
-                </soap:Body>
-            </soap:Envelope>");
-
-            var postRequest = webPostRequest.GetRequestStream();
-            postRequest.Write(requestContent, 0, requestContent.Length);
-            var postResponse = webPostRequest.GetResponse();
-            var readPostStream = new StreamReader(postResponse.GetResponseStream(), Encoding.UTF8);
-            var postData = readPostStream.ReadToEnd();
-
-            readPostStream.Close();
-            postResponse.Close();
-            */
             var nameTable = new NameTable();
             var nsManager = new XmlNamespaceManager(nameTable);
             nsManager.AddNamespace("x", "urn:ec.europa.eu:taxud:vies:services:checkVat:types");
@@ -194,12 +140,39 @@ namespace VatIDChecker
             }
             return new OkObjectResult(userResponse);
         }
-        private static async Task<string> GetClientIdFromRequestBody(Stream body)
+        private async Task<string> GetClientIdFromRequestBody(Stream body)
         {
             var requestBody = await new StreamReader(body).ReadToEndAsync();
-            var invoiceObject = JsonSerializer.Deserialize<DTO.InvoiceObject>(requestBody);
+            var invoiceObject = JsonSerializer.Deserialize<InvoiceObject>(requestBody);
             var clientId = invoiceObject?.invoice?.client_id;
             return clientId;
+        }
+
+        private async Task<Client> GetClientFromBillomat(string clientId)
+        {
+            // Billomat GET Request. For details see https://www.billomat.com/api/kunden/.
+            // URL: https://{BillomatID}.billomat.net/api/clients/{string}
+            var urlClient = $"https://softarchmelinatest.billomat.net/api/clients/{clientId}";
+            var apiKey = Environment.GetEnvironmentVariable("BILLOMATID", EnvironmentVariableTarget.Process);
+
+            // Send Header Information via await client.SendAsync(webGetRequest)
+            var webGetRequest = new HttpRequestMessage
+            {
+                RequestUri = new Uri(urlClient),
+                Method = HttpMethod.Get,
+                Headers = {
+                    { "X-BillomatApiKey", apiKey },
+                    { HttpRequestHeader.ContentType.ToString(), "application/json;charset='utf-8'"},
+                    { HttpRequestHeader.Accept.ToString(), "application/json" },
+                    { "Timeout", "1000000000"},
+                },
+            };
+
+            using var getResponse = await client.SendAsync(webGetRequest);
+            var getContent = getResponse.Content;
+            var getJsonContent = getContent.ReadAsStringAsync().Result;
+
+            return JsonSerializer.Deserialize<ClientObject>(getJsonContent).client;
         }
     }
 }
