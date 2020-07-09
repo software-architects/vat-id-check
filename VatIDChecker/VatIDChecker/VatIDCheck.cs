@@ -119,7 +119,7 @@ namespace VatIDChecker
                 }
                 else
                 {
-                    userResponse += $"\nIncorrect Country Code: {valParam.cCode} != {countryCode}";
+                    userResponse += $"\nIncorrect country code: {valParam.cCode} != {countryCode}";
                     foundError |= true;
                 }
 
