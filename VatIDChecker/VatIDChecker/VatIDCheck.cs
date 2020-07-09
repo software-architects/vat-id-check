@@ -80,7 +80,7 @@ namespace VatIDChecker
                         else
                         {
                             userResponse += "\nCompany name not valid";
-                            strStatus += "\nIncorrect company name: " + valParam.name;
+                            strStatus += "\nIncorrect company name: " + valParam.name.ToLower().Replace("\n", " ") + " != " + clientName.ToLower().Replace("\n", " ");
                         }
                         if ((valParam.address != null) && (valParam.address.ToLower().Replace("\n", " ") == clientAddress.ToLower().Replace("\n", " ")) && (valParam.address != "---"))
                         {
@@ -90,7 +90,7 @@ namespace VatIDChecker
                         else
                         {
                             userResponse += "\nAddress not valid";
-                            strStatus += "\nIncorrect Address: " + valParam.address.Replace("\n", " ");
+                            strStatus += "\nIncorrect Address: " + valParam.address.ToLower().Replace("\n", " ") + " != " + clientAddress.ToLower().Replace("\n", " ");
                         }
                         if ((valParam.cCode != null) && (valParam.cCode != "---") && (valParam.cCode == countryCode))
                         {
@@ -100,7 +100,7 @@ namespace VatIDChecker
                         else
                         {
                             userResponse += "\nCountry Code not valid";
-                            strStatus += "\nIncorrect Country Code: " + valParam.cCode;
+                            strStatus += "\nIncorrect Country Code: " + valParam.cCode + " != " + countryCode;
                         }
                         if ((valParam.vatNum != null) && (valParam.vatNum != "---") && (valParam.vatNum == vatNumber))
                         {
@@ -110,13 +110,13 @@ namespace VatIDChecker
                         else
                         {
                             userResponse += "\nVatNumber not valid";
-                            strStatus += "\nIncorrect vat-number: " + valParam.vatNum;
+                            strStatus += "\nIncorrect vat-number: " + valParam.vatNum + " != " + vatNumber;
                         }
                     }
                     else
                     {
                         userResponse = "\nNot valid";
-                        strStatus = "\nEverything's incorrect :thumbs_down:";
+                        strStatus = "\nEverything's incorrect :(";
                     }
                 }
                 var st = await PostToSlack(strStatus);
