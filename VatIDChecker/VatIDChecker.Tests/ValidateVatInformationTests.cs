@@ -70,6 +70,54 @@ namespace VatIDChecker.Tests
             Assert.Contains("Incorrect company name", userResponse);
         }
         [Fact]
+        public void SuccessfulValidationCompanyAddress()
+        {
+            // Prepare
+            var factory = Mock.Of<IHttpClientFactory>();
+            var checker = new VatIDCheck(factory);
+
+            // Execute
+            var (userResponse, foundError) = checker.ValidateVatInformation(
+                string.Empty, string.Empty, string.Empty, "Musterstrasse 1 AT-4210 Gallneukirchen",
+                new ValidationParams
+                {
+                    valid = "true",
+                    name = string.Empty,
+                    address = "Musterstrasse 1 AT-4210 Gallneukirchen",
+                    vatNum = string.Empty,
+                    cCode = string.Empty
+                });
+
+            // Assert
+            Assert.False(foundError);
+            Assert.Contains("Correct address", userResponse);
+        }
+
+        [Fact]
+        public void UnsuccessfulValidationCompanyAddress()
+        {
+            // Prepare
+            var factory = Mock.Of<IHttpClientFactory>();
+            var checker = new VatIDCheck(factory);
+
+            // Execute
+            var (userResponse, foundError) = checker.ValidateVatInformation(
+                string.Empty, string.Empty, string.Empty, "dummy",
+                new ValidationParams
+                {
+                    valid = "true",
+                    name = string.Empty,
+                    address = "Musterstrasse 1 AT-4210 Gallneukirchen",
+                    vatNum = string.Empty,
+                    cCode = string.Empty
+                });
+
+            // Assert
+            Assert.True(foundError);
+            Assert.Contains("Incorrect address", userResponse);
+        }
+
+        [Fact]
         public void SuccessfulValidationCountryCode()
         {
             // Prepare

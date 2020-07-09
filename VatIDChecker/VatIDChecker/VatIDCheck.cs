@@ -108,7 +108,7 @@ namespace VatIDChecker
                 }
                 else
                 {
-                    userResponse += $"\nIncorrect Address: {CleanupIdentifier(valParam.address)} != {CleanupIdentifier(clientAddress)}";
+                    userResponse += $"\nIncorrect address: {CleanupIdentifier(valParam.address)} != {CleanupIdentifier(clientAddress)}";
                     foundError |= true;
                 }
 
