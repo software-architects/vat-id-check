@@ -60,17 +60,14 @@ namespace VatIDChecker
                 // UST_ID Validation
                 if (string.IsNullOrEmpty(valParam.valid))
                 {
-                    // Todo: Add meaningful message
-                    log.LogError("Todo: Add meaningful message");
+                    log.LogError("Cannot find vat information of company" + clientName);
 
-                    // Todo: Even if valParam is null, send a status message to Slack
-
-                    return new NotFoundObjectResult("Not found");
+                    return new NotFoundObjectResult("Cannot find vat information of company" + clientName);
                 }
 
                 (var userResponse, var foundError) = ValidateVatInformation(countryCode, vatNumber, clientName, clientAddress, valParam);
 
-                var sendSlackMessageOnSuccess = Environment.GetEnvironmentVariable("VALIDSTATUS", EnvironmentVariableTarget.Process);
+                var sendSlackMessageOnSuccess = Environment.GetEnvironmentVariable("SENDMESSAGEONSUCCESS", EnvironmentVariableTarget.Process);
                 if (foundError || sendSlackMessageOnSuccess == "true")
                 {
                     await PostToSlack(userResponse);
@@ -85,7 +82,6 @@ namespace VatIDChecker
             }
 
         }
-
         private (string userResponse, bool foundError) ValidateVatInformation(string countryCode, string vatNumber, string clientName, string clientAddress, ValidationParams valParam)
         {
             var userResponse = string.Empty;
@@ -113,8 +109,7 @@ namespace VatIDChecker
                 }
                 else
                 {
-                    // Todo: Interpolation
-                    userResponse += "\nIncorrect Address: " + CleanupIdentifier(valParam.address) + " != " + CleanupIdentifier(clientAddress);
+                    userResponse += $"\nIncorrect Address: {CleanupIdentifier(valParam.address)} != {CleanupIdentifier(clientAddress)}";
                     foundError |= true;
                 }
 
@@ -124,8 +119,7 @@ namespace VatIDChecker
                 }
                 else
                 {
-                    // Todo: Interpolation
-                    userResponse += "\nIncorrect Country Code: " + valParam.cCode + " != " + countryCode;
+                    userResponse += $"\nIncorrect Country Code: {valParam.cCode} != {countryCode}";
                     foundError |= true;
                 }
 
@@ -135,19 +129,18 @@ namespace VatIDChecker
                 }
                 else
                 {
-                    // Todo: Interpolation
-                    userResponse += "\nIncorrect vat-number: " + valParam.vatNum + " != " + vatNumber;
+                    userResponse += $"\nIncorrect vat-number: {valParam.vatNum} != {vatNumber}";
                     foundError |= true;
                 }
             }
             else
             {
-                userResponse = "\nNot valid";
+                userResponse = "\nNothing's valid";
+                foundError |= true;
             }
 
             return (userResponse, foundError);
         }
-
         private ValidationParams GetValidEUParam(XDocument soapRes)
         {
             var nameTable = new NameTable();
@@ -166,7 +159,6 @@ namespace VatIDChecker
 
             return valParam;
         }
-
         private async Task<string> GetClientIdFromRequestBody(Stream body)
         {
             var requestBody = await new StreamReader(body).ReadToEndAsync();
@@ -174,7 +166,6 @@ namespace VatIDChecker
             var clientId = invoiceObject?.invoice?.client_id;
             return clientId;
         }
-
         private async Task<string> PostToSlack(string var)
         {
             var urlSlack = @"https://slack.com/api/chat.postMessage";
@@ -234,7 +225,6 @@ namespace VatIDChecker
             var postXmlContent = postContent.ReadAsStringAsync().Result;
             return postXmlContent;
         }
-
         private async Task<Client> GetClientFromBillomat(string clientId)
         {
             // Billomat GET Request. For details see https://www.billomat.com/api/kunden/.
