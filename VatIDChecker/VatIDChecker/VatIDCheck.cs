@@ -80,9 +80,9 @@ namespace VatIDChecker
                 log.LogError(ex, "Error while checking VAT ID");
                 return new InternalServerErrorResult();
             }
-
         }
-        private (string userResponse, bool foundError) ValidateVatInformation(string countryCode, string vatNumber, string clientName, string clientAddress, ValidationParams valParam)
+
+        internal (string userResponse, bool foundError) ValidateVatInformation(string countryCode, string vatNumber, string clientName, string clientAddress, ValidationParams valParam)
         {
             var userResponse = string.Empty;
             bool foundError = false;
