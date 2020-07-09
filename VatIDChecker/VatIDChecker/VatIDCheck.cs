@@ -54,15 +54,17 @@ namespace VatIDChecker
 
                 var xmlContent = await PostXMLToEU(countryCode, vatNumber);
                 var soapResponse = XDocument.Parse(xmlContent.ToString());
-                
+
                 var valParam = GetValidEUParam(soapResponse);
 
 
                 // UST_ID Validation
-                var userResponse = string.Empty; 
+                var userResponse = string.Empty;
                 var validStatus = Environment.GetEnvironmentVariable("VALIDSTATUS", EnvironmentVariableTarget.Process);
 
                 var strStatus = "";
+                var strPostToSlack = "";
+                var count = 0;
                 if (valParam.valid == null)
                 {
                     userResponse = "Not found";
@@ -74,8 +76,9 @@ namespace VatIDChecker
                     {
                         if ((valParam.name != null) && (valParam.name.ToLower().Replace("\n", " ") == clientName.ToLower().Replace("\n", " ")) && (valParam.name != "---"))
                         {
-                            userResponse = "\nCorrect company name: " + valParam.name;
-                            strStatus = "\nCorrect company name: " + valParam.name;
+                            userResponse = "\nCorrect company name: " + valParam.name.ToLower().Replace("\n", " ");
+                            strStatus = "\nCorrect company name: " + valParam.name.ToLower().Replace("\n", " ");
+                            count++;
                         }
                         else
                         {
@@ -84,8 +87,9 @@ namespace VatIDChecker
                         }
                         if ((valParam.address != null) && (valParam.address.ToLower().Replace("\n", " ") == clientAddress.ToLower().Replace("\n", " ")) && (valParam.address != "---"))
                         {
-                            userResponse += "\nCorrect address: " + valParam.address.Replace("\n", " ");
-                            strStatus += "\nCorrect address: " + valParam.address.Replace("\n", " ");
+                            userResponse += "\nCorrect address: " + valParam.address.ToLower().Replace("\n", " ");
+                            strStatus += "\nCorrect address: " + valParam.address.ToLower().Replace("\n", " ");
+                            count++;
                         }
                         else
                         {
@@ -96,6 +100,7 @@ namespace VatIDChecker
                         {
                             userResponse += "\nCorrect country code: " + valParam.cCode;
                             strStatus += "\nCorrect Correct country : " + valParam.cCode;
+                            count++;
                         }
                         else
                         {
@@ -106,6 +111,7 @@ namespace VatIDChecker
                         {
                             userResponse += "\nCorrect vat-number: " + valParam.vatNum;
                             strStatus += "\nCorrect vat-number: " + valParam.vatNum;
+                            count++;
                         }
                         else
                         {
@@ -118,8 +124,16 @@ namespace VatIDChecker
                         userResponse = "\nNot valid";
                         strStatus = "\nEverything's incorrect :(";
                     }
+                    if (count == 4 && validStatus == "true")
+                    {
+                        strPostToSlack = await PostToSlack(strStatus);
+                    }
+                    else if (count < 4)
+                    {
+                        strPostToSlack = await PostToSlack(strStatus);
+                    }
+                    else if(count == 4 && validStatus == "false") { }
                 }
-                var st = await PostToSlack(strStatus);
                 return new OkObjectResult(userResponse);
             }
             catch (Exception ex)
@@ -161,6 +175,9 @@ namespace VatIDChecker
         {
             var urlSlack = @"https://slack.com/api/chat.postMessage";
             var slackAuthorization = Environment.GetEnvironmentVariable("SLACKAUTHORIZATIONKEY", EnvironmentVariableTarget.Process);
+            var slackChannel = Environment.GetEnvironmentVariable("SLACKCHANNEL", EnvironmentVariableTarget.Process);
+            var slackUser = Environment.GetEnvironmentVariable("SLACKUSER", EnvironmentVariableTarget.Process);
+
             var slackPostRequest = new HttpRequestMessage
             {
                 RequestUri = new Uri(urlSlack),
@@ -171,7 +188,7 @@ namespace VatIDChecker
                     { "Timeout", "1000000000" },
                 },
                 Content = new StringContent(
-                    JsonSerializer.Serialize(new { channel = "demo", text = $"<@U02FJAB8A> {var}" }), Encoding.UTF8, "application/json")
+                    JsonSerializer.Serialize(new { channel = $"{slackChannel}", text = $"{slackUser}{var}" }), Encoding.UTF8, "application/json")
             };
 
             var postResponse = await client.SendAsync(slackPostRequest);
