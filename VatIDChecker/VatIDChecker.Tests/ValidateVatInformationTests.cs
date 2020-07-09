@@ -19,7 +19,7 @@ namespace VatIDChecker.Tests
                 new ValidationParams { valid = "false" });
             
             // Assert
-            Assert.False(foundError);
+            Assert.True(foundError);
             Assert.NotEmpty(userResponse);
         }
 
