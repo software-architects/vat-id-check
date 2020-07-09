@@ -11,19 +11,21 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Web.Http;
-using System.Xml;
 using System.Xml.Linq;
-using System.Xml.XPath;
 
 namespace VatIDChecker
 {
     public class VatIDCheck
     {
         private readonly HttpClient client;
+        private readonly EuVatChecker euVatChecker;
+        private IHttpClientFactory factory;
 
-        public VatIDCheck(IHttpClientFactory clientFactory)
+        public VatIDCheck(IHttpClientFactory clientFactory, IHttpClientFactory factory, EuVatChecker euVatChecker)
         {
             client = clientFactory.CreateClient();
+            this.euVatChecker = euVatChecker;
+            this.factory = factory;
         }
 
         [FunctionName("VatIDCheck")]
@@ -50,11 +52,11 @@ namespace VatIDChecker
                 var zip = billomatClient.zip;
                 var city = billomatClient.city;
                 var clientAddress = street + " " + countryCode + "-" + zip + " " + city;
-
-                var xmlContent = await PostXMLToEU(countryCode, vatNumber);
+                
+                var xmlContent = await euVatChecker.PostXMLToEU(countryCode, vatNumber);
                 var soapResponse = XDocument.Parse(xmlContent.ToString());
 
-                var valParam = GetValidEUParam(soapResponse);
+                var valParam = euVatChecker.GetValidEUParam(soapResponse);
 
                 // UST_ID Validation
                 if (string.IsNullOrEmpty(valParam.valid))
@@ -140,24 +142,6 @@ namespace VatIDChecker
 
             return (userResponse, foundError);
         }
-        private ValidationParams GetValidEUParam(XDocument soapRes)
-        {
-            var nameTable = new NameTable();
-            var nsManager = new XmlNamespaceManager(nameTable);
-            nsManager.AddNamespace("x", "urn:ec.europa.eu:taxud:vies:services:checkVat:types");
-            nsManager.AddNamespace("soap", "http://schemas.xmlsoap.org/soap/envelope/");
-
-            var valParam = new ValidationParams()
-            {
-                valid = (string)soapRes.XPathSelectElement("//soap:Body/x:checkVatResponse/x:valid", nsManager),
-                name = (string)soapRes.XPathSelectElement("//soap:Body/x:checkVatResponse/x:name", nsManager),
-                address = (string)soapRes.XPathSelectElement("//soap:Body/x:checkVatResponse/x:address", nsManager),
-                cCode = (string)soapRes.XPathSelectElement("//soap:Body/x:checkVatResponse/x:countryCode", nsManager),
-                vatNum = (string)soapRes.XPathSelectElement("//soap:Body/x:checkVatResponse/x:vatNumber", nsManager)
-            };
-
-            return valParam;
-        }
         private async Task<string> GetClientIdFromRequestBody(Stream body)
         {
             var requestBody = await new StreamReader(body).ReadToEndAsync();
@@ -187,39 +171,6 @@ namespace VatIDChecker
 
             var postResponse = await client.SendAsync(slackPostRequest);
             postResponse.EnsureSuccessStatusCode();
-            var postContent = postResponse.Content;
-            var postXmlContent = postContent.ReadAsStringAsync().Result;
-            return postXmlContent;
-        }
-        private async Task<string> PostXMLToEU(string countryCode, string vatNumber)
-        {
-            // POST Request
-            const string urlEu = "http://ec.europa.eu/taxation_customs/vies/services/checkVatService";
-
-            var webPostRequest = new HttpRequestMessage
-            {
-                RequestUri = new Uri(urlEu),
-                Method = HttpMethod.Post,
-                Headers = {
-                    { "SOAPAction", urlEu},
-                    { HttpRequestHeader.ContentType.ToString(), "text/xml;charset='utf-8'"},
-                    { HttpRequestHeader.Accept.ToString(), "text/xml" },
-                    { "Timeout", "1000000000"},
-                },
-                Content = new StringContent(@"<?xml version='1.0' encoding='utf-8'?>
-                        <soap:Envelope xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns:xsd='http://www.w3.org/2001/XMLSchema' xmlns:soap='http://schemas.xmlsoap.org/soap/envelope/'>
-                            <soap:Body>
-                                <checkVat xmlns='urn:ec.europa.eu:taxud:vies:services:checkVat:types'>
-                                    <countryCode>" + countryCode + @"</countryCode>
-                                    <vatNumber>" + vatNumber + @"</vatNumber>
-                                </checkVat>
-                            </soap:Body>
-                        </soap:Envelope>")
-            };
-
-            var postResponse = await client.SendAsync(webPostRequest);
-            postResponse.EnsureSuccessStatusCode();
-
             var postContent = postResponse.Content;
             var postXmlContent = postContent.ReadAsStringAsync().Result;
             return postXmlContent;

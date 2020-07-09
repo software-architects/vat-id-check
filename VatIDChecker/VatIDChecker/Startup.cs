@@ -12,6 +12,7 @@ namespace VatIDChecker
         public override void Configure(IFunctionsHostBuilder builder)
         {
             builder.Services.AddHttpClient();
+            builder.Services.AddSingleton<EuVatChecker>();
         }
     }
 }
