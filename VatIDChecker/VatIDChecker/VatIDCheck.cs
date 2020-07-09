@@ -57,83 +57,25 @@ namespace VatIDChecker
 
                 var valParam = GetValidEUParam(soapResponse);
 
-
                 // UST_ID Validation
-                var userResponse = string.Empty;
-                var validStatus = Environment.GetEnvironmentVariable("VALIDSTATUS", EnvironmentVariableTarget.Process);
+                if (string.IsNullOrEmpty(valParam.valid))
+                {
+                    // Todo: Add meaningful message
+                    log.LogError("Todo: Add meaningful message");
 
-                var strStatus = "";
-                var strPostToSlack = "";
-                var count = 0;
-                if (valParam.valid == null)
-                {
-                    userResponse = "Not found";
-                    strStatus = "Not found";
+                    // Todo: Even if valParam is null, send a status message to Slack
+
+                    return new NotFoundObjectResult("Not found");
                 }
-                else
+
+                (var userResponse, var foundError) = ValidateVatInformation(countryCode, vatNumber, clientName, clientAddress, valParam);
+
+                var sendSlackMessageOnSuccess = Environment.GetEnvironmentVariable("VALIDSTATUS", EnvironmentVariableTarget.Process);
+                if (foundError || sendSlackMessageOnSuccess == "true")
                 {
-                    if (valParam.valid == "true")
-                    {
-                        if ((valParam.name != null) && (valParam.name.ToLower().Replace("\n", " ") == clientName.ToLower().Replace("\n", " ")) && (valParam.name != "---"))
-                        {
-                            userResponse = "\nCorrect company name: " + valParam.name.ToLower().Replace("\n", " ");
-                            strStatus = "\nCorrect company name: " + valParam.name.ToLower().Replace("\n", " ");
-                            count++;
-                        }
-                        else
-                        {
-                            userResponse += "\nCompany name not valid";
-                            strStatus += "\nIncorrect company name: " + valParam.name.ToLower().Replace("\n", " ") + " != " + clientName.ToLower().Replace("\n", " ");
-                        }
-                        if ((valParam.address != null) && (valParam.address.ToLower().Replace("\n", " ") == clientAddress.ToLower().Replace("\n", " ")) && (valParam.address != "---"))
-                        {
-                            userResponse += "\nCorrect address: " + valParam.address.ToLower().Replace("\n", " ");
-                            strStatus += "\nCorrect address: " + valParam.address.ToLower().Replace("\n", " ");
-                            count++;
-                        }
-                        else
-                        {
-                            userResponse += "\nAddress not valid";
-                            strStatus += "\nIncorrect Address: " + valParam.address.ToLower().Replace("\n", " ") + " != " + clientAddress.ToLower().Replace("\n", " ");
-                        }
-                        if ((valParam.cCode != null) && (valParam.cCode != "---") && (valParam.cCode == countryCode))
-                        {
-                            userResponse += "\nCorrect country code: " + valParam.cCode;
-                            strStatus += "\nCorrect Correct country : " + valParam.cCode;
-                            count++;
-                        }
-                        else
-                        {
-                            userResponse += "\nCountry Code not valid";
-                            strStatus += "\nIncorrect Country Code: " + valParam.cCode + " != " + countryCode;
-                        }
-                        if ((valParam.vatNum != null) && (valParam.vatNum != "---") && (valParam.vatNum == vatNumber))
-                        {
-                            userResponse += "\nCorrect vat-number: " + valParam.vatNum;
-                            strStatus += "\nCorrect vat-number: " + valParam.vatNum;
-                            count++;
-                        }
-                        else
-                        {
-                            userResponse += "\nVatNumber not valid";
-                            strStatus += "\nIncorrect vat-number: " + valParam.vatNum + " != " + vatNumber;
-                        }
-                    }
-                    else
-                    {
-                        userResponse = "\nNot valid";
-                        strStatus = "\nEverything's incorrect :(";
-                    }
-                    if (count == 4 && validStatus == "true")
-                    {
-                        strPostToSlack = await PostToSlack(strStatus);
-                    }
-                    else if (count < 4)
-                    {
-                        strPostToSlack = await PostToSlack(strStatus);
-                    }
-                    else if(count == 4 && validStatus == "false") { }
+                    await PostToSlack(userResponse);
                 }
+
                 return new OkObjectResult(userResponse);
             }
             catch (Exception ex)
@@ -142,6 +84,68 @@ namespace VatIDChecker
                 return new InternalServerErrorResult();
             }
 
+        }
+
+        private (string userResponse, bool foundError) ValidateVatInformation(string countryCode, string vatNumber, string clientName, string clientAddress, ValidationParams valParam)
+        {
+            var userResponse = string.Empty;
+            bool foundError = false;
+
+            if (valParam.valid == "true")
+            {
+                static string CleanupIdentifier(string id) => id.ToLower().Replace("\n", " ");
+                static bool CompareIdentifiers(string euCheck, string input) =>
+                    euCheck != null && CleanupIdentifier(euCheck) == CleanupIdentifier(input) && euCheck != "---";
+
+                if (CompareIdentifiers(valParam.name, clientName))
+                {
+                    userResponse = "\nCorrect company name: " + CleanupIdentifier(valParam.name);
+                }
+                else
+                {
+                    userResponse += $"\nIncorrect company name: {CleanupIdentifier(valParam.name)} != {CleanupIdentifier(clientName)}";
+                    foundError |= true;
+                }
+
+                if (CompareIdentifiers(valParam.address, clientAddress))
+                {
+                    userResponse += "\nCorrect address: " + CleanupIdentifier(valParam.address);
+                }
+                else
+                {
+                    // Todo: Interpolation
+                    userResponse += "\nIncorrect Address: " + CleanupIdentifier(valParam.address) + " != " + CleanupIdentifier(clientAddress);
+                    foundError |= true;
+                }
+
+                if (valParam.cCode != null && valParam.cCode != "---" && valParam.cCode == countryCode)
+                {
+                    userResponse += "\nCorrect country code: " + valParam.cCode;
+                }
+                else
+                {
+                    // Todo: Interpolation
+                    userResponse += "\nIncorrect Country Code: " + valParam.cCode + " != " + countryCode;
+                    foundError |= true;
+                }
+
+                if (valParam.vatNum != null && valParam.vatNum != "---" && valParam.vatNum == vatNumber)
+                {
+                    userResponse += "\nCorrect vat-number: " + valParam.vatNum;
+                }
+                else
+                {
+                    // Todo: Interpolation
+                    userResponse += "\nIncorrect vat-number: " + valParam.vatNum + " != " + vatNumber;
+                    foundError |= true;
+                }
+            }
+            else
+            {
+                userResponse = "\nNot valid";
+            }
+
+            return (userResponse, foundError);
         }
 
         private ValidationParams GetValidEUParam(XDocument soapRes)
