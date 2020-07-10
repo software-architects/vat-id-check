@@ -9,6 +9,8 @@ If the `UST_ID`, `company name`, `company address` are not correct, for example 
 You also receive an `OK` message of the whole data, if it's correct.
 If you do't want to, you can enable it in the configuration.
 
+![VatCheckReceive](https://github.com/software-architects/vat-id-check/blob/master/img/vatcheckreceive.png)
+
 ### How does it work?
 Basically you use a Billomat Webhook to send data on an certain event (invoice create) to our programm, which sendas the data to a eu_validation programm and validates the received data with the user's inserted one.
 
