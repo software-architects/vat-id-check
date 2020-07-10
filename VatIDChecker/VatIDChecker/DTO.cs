@@ -10,12 +10,20 @@ namespace VatIDChecker
         public string cCode { get; set; }
         public string vatNum { get; set; }
     }
-    
+
     public class Tax
     {
         public string name { get; set; }
         public string rate { get; set; }
         public string amount { get; set; }
+        public string amount_plain { get; set; }
+        public string amount_rounded { get; set; }
+        public string amount_net { get; set; }
+        public string amount_net_plain { get; set; }
+        public string amount_net_rounded { get; set; }
+        public string amount_gross { get; set; }
+        public string amount_gross_plain { get; set; }
+        public string amount_gross_rounded { get; set; }
     }
 
     public class Taxes
@@ -26,43 +34,51 @@ namespace VatIDChecker
     public class Invoice
     {
         public string id { get; set; }
+        public DateTime created { get; set; }
+        public DateTime updated { get; set; }
         public string client_id { get; set; }
         public string contact_id { get; set; }
-        public DateTime created { get; set; }
         public string invoice_number { get; set; }
         public string number { get; set; }
         public string number_pre { get; set; }
-        public string status { get; set; }
+        public string number_length { get; set; }
+        public string title { get; set; }
         public string date { get; set; }
         public string supply_date { get; set; }
         public string supply_date_type { get; set; }
         public string due_date { get; set; }
         public string due_days { get; set; }
         public string address { get; set; }
+        public string status { get; set; }
+        public string label { get; set; }
+        public string intro { get; set; }
+        public string note { get; set; }
+        public string total_net { get; set; }
+        public string total_gross { get; set; }
+        public string reduction { get; set; }
+        public string total_reduction { get; set; }
+        public string total_net_unreduced { get; set; }
+        public string total_gross_unreduced { get; set; }
+        public string currency_code { get; set; }
+        public string quote { get; set; }
+        public string net_gross { get; set; }
         public string discount_rate { get; set; }
         public string discount_date { get; set; }
         public string discount_days { get; set; }
         public string discount_amount { get; set; }
-        public string label { get; set; }
-        public string intro { get; set; }
-        public string note { get; set; }
-        public string total_gross { get; set; }
-        public string total_net { get; set; }
-        public string net_gross { get; set; }
-        public string reduction { get; set; }
-        public string total_gross_unreduced { get; set; }
-        public string total_net_unreduced { get; set; }
         public string paid_amount { get; set; }
         public string open_amount { get; set; }
-        public string currency_code { get; set; }
-        public string quote { get; set; }
+        public string payment_types { get; set; }
+        public Taxes taxes { get; set; }
+        public string invoice_id { get; set; }
         public string offer_id { get; set; }
         public string confirmation_id { get; set; }
         public string recurring_id { get; set; }
-        public Taxes taxes { get; set; }
-        public string payment_types { get; set; }
-
+        public string dig_proceeded { get; set; }
+        public string template_id { get; set; }
+        public string customfield { get; set; }
     }
+
     public class InvoiceObject
     {
         public Invoice invoice { get; set; }
