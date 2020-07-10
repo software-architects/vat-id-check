@@ -19,14 +19,11 @@ namespace VatIDChecker
     {
         private readonly HttpClient client;
         private readonly EuVatChecker euVatChecker;
-        private IHttpClientFactory factory;
 
-        public VatIDCheck(IHttpClientFactory clientFactory, IHttpClientFactory factory, EuVatChecker euVatChecker)
+        public VatIDCheck(IHttpClientFactory clientFactory, EuVatChecker euVatChecker)
         {
             client = clientFactory.CreateClient();
             this.euVatChecker = euVatChecker;
-            this.factory = factory;
-        }
 
         [FunctionName("VatIDCheck")]
         public async Task<IActionResult> Run(

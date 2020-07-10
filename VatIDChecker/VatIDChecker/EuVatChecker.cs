@@ -18,6 +18,7 @@ namespace VatIDChecker
         {
             client = clientFactory.CreateClient();
         }
+
         public async Task<string> PostXMLToEU(string countryCode, string vatNumber)
         {
             // POST Request
