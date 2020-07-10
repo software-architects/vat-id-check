@@ -24,6 +24,7 @@ namespace VatIDChecker
         {
             client = clientFactory.CreateClient();
             this.euVatChecker = euVatChecker;
+        }
 
         [FunctionName("VatIDCheck")]
         public async Task<IActionResult> Run(
