@@ -46,7 +46,7 @@ e.g.
 | `SLACKUSER`              | Your user ID. Got to `Show Profile` -> `Click on the 3 Dots` -> `Copy your User ID`, e.g `U02FJAF8B`      |
 
 `Relevant Links`         
-|Billomat ID: `https://www.billomat.com/support/faq/einstellungen/erklaerung-der-billomat-id/` 
-|api-key: `https://www.billomat.com/support/faq/schnittstellen-add-ons/api-schluessel-finden/` 
-|slack token: `https://api.slack.com/authentication/token-types#granular_bot` 
-|slack user ID: `https://help.workast.com/hc/en-us/articles/360027461274-How-to-find-a-Slack-user-ID`
++ Billomat ID: https://www.billomat.com/support/faq/einstellungen/erklaerung-der-billomat-id/ 
++ Api-key: https://www.billomat.com/support/faq/schnittstellen-add-ons/api-schluessel-finden/ 
++ Slack token: https://api.slack.com/authentication/token-types#granular_bot
++ Slack user ID: https://help.workast.com/hc/en-us/articles/360027461274-How-to-find-a-Slack-user-ID
