@@ -12,7 +12,7 @@ If you do't want to, you can enable it in the configuration.<br>
 ![VatCheckReceive](https://github.com/software-architects/vat-id-check/blob/master/img/vatcheckreceive.png)
 
 ### How does it work?
-Basically you use a Billomat Webhook to send data on an certain event (invoice create) to our programm, which sendas the data to a eu_validation programm and validates the received data with the user's inserted one.
+Basically you use a Billomat Webhook to send data on an certain event (invoice create) to our program, which sendas the data to a eu_validation programm and validates the received data with the user's inserted one.
 
 ## Billomat
 
@@ -27,10 +27,10 @@ A Webhook is used to invoke the inserted URL, if an event happens. In our case i
 To use our slack slash command you have to be in the same channel you configured with the `SLACKCHANNEL` parameter.<br>
 Just type `/vatchecker {UST_ID}`. <br>
 Insert the UST_ID you want to check and press `Enter`.<br>
-The slackbot sends this UST_ID to the same eu_validation program as before and slack displays the `UST_ID`, `company name` and `company address`<br>
+The bot sends this UST_ID to the same eu_validation program as before and slack displays the `UST_ID`, `company name` and `company address`<br>
 
-e.g. 
-![SlackBotSend](https://github.com/software-architects/vat-id-check/blob/master/img/slackbotsend.png)
+e.g. <br>
+![SlackBotSend](https://github.com/software-architects/vat-id-check/blob/master/img/slackbotsend.png)<br>
 ![SlackBotReceive](https://github.com/software-architects/vat-id-check/blob/master/img/slackbotreceive.png)
 
 ## Configuration Parameters
@@ -45,7 +45,7 @@ e.g.
 | `SLACKCHANNEL`           | The channel you want to receive the message or write with the vat-id-checker-bot         |
 | `SLACKUSER`              | To be marked in the message. Got to `Show Profile` -> `Click on the 3 Dots` -> `Copy your User ID`, e.g `U02FJAF8B`      |
 
-`Relevant Links`         
+## Relevant Links     
 + Billomat ID: https://www.billomat.com/support/faq/einstellungen/erklaerung-der-billomat-id/ 
 + Api-key: https://www.billomat.com/support/faq/schnittstellen-add-ons/api-schluessel-finden/ 
 + Slack token: https://api.slack.com/authentication/token-types#granular_bot
