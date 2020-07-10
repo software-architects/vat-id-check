@@ -4,16 +4,16 @@
 
 ## Introduction
 
-TODO: Describe what this project does
 This project ckecks the correctness of the data you use to create an invoice via Billomat.
-If the `UST_ID`, `company name`, `company address` are not correct, for example you have a typo, you receive a message via slack in an certain channel you can configure. 
+If the `UST_ID`, `company name`, `company address` are not correct, for example if you have a typo, you receive a message via slack in an certain channel you can configure.
+You also receive an `OK` message of the whole data, if it's correct.
+If you do't want to, you can enable it in the configuration.
 
 ### How does it work?
 Basically you use a Billomat Webhook to send data on an certain event (invoice create) to our programm, which sendas the data to a eu_validation programm and validates the received data with the user's inserted one.
 
 ## Billomat
 
-TODO: Describe how this projects interacts with Billomat
 To create a Webhook go to
 `Settings`-> `Administration` -> `Webhooks` -> `New Webook`
 Insert in the URL slot this URL `https://vatidchecker.azurewebsites.net/api/VatIDCheck` and the `application/json` format
@@ -22,7 +22,6 @@ A Webhook is used to invoke the inserted URL, if an event happens. In our case i
 
 ## Slack Slash Command
 
-TODO: Describe how the Slack slash command works (incl. sample of how to call it)
 To use our slack slash command you have to be in the same channel you configured with the `SLACKCHANNEL` parameter.
 Just type `/vatchecker {UST_ID}`. 
 Insert the UST_ID you want to check and press `Enter`.
@@ -34,7 +33,6 @@ e.g.
 
 ## Configuration Parameters
 
-TODO: Describe configuration parameters. Please include links to relevant documentation of Billomat and Slack.
 
 | Parameter                | Description |
 | ------------             | ----------- |
@@ -44,8 +42,9 @@ TODO: Describe configuration parameters. Please include links to relevant docume
 | `SENDMESSAGEONSUCCESS`   | `true or false` If true, you receive a message even if everything's correct. If false, you won't receive a message upon success        |
 | `SLACKCHANNEL`           | The channel you want to receive the message or write with the vat-id-checker-bot         |
 | `SLACKUSER`              | Your user ID. Got to `Show Profile` -> `Click on the 3 Dots` -> `Copy your User ID`, e.g `U02FJAF8B`      |
+
 `Relevant Links`         
-|Billomat ID: `https://www.billomat.com/support/faq/einstellungen/erklaerung-der-billomat-id/` |
-|api-key: `https://www.billomat.com/support/faq/schnittstellen-add-ons/api-schluessel-finden/` |
-|slack token: `https://api.slack.com/authentication/token-types#granular_bot` |
-|slack user ID: `https://help.workast.com/hc/en-us/articles/360027461274-How-to-find-a-Slack-user-ID`|
+|Billomat ID: `https://www.billomat.com/support/faq/einstellungen/erklaerung-der-billomat-id/` 
+|api-key: `https://www.billomat.com/support/faq/schnittstellen-add-ons/api-schluessel-finden/` 
+|slack token: `https://api.slack.com/authentication/token-types#granular_bot` 
+|slack user ID: `https://help.workast.com/hc/en-us/articles/360027461274-How-to-find-a-Slack-user-ID`
