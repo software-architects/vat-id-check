@@ -43,7 +43,7 @@ e.g.
 | `SLACKAUTHORIZATIONKEY`  | To be able to send messages to slack create a slack api token `Bearer xoxb-....`        |
 | `SENDMESSAGEONSUCCESS`   | `true or false` If true, you receive a message even if everything's correct. If false, you won't receive a message upon success        |
 | `SLACKCHANNEL`           | The channel you want to receive the message or write with the vat-id-checker-bot         |
-| `SLACKUSER`              | Your user ID. Got to `Show Profile` -> `Click on the 3 Dots` -> `Copy your User ID`, e.g `U02FJAF8B`      |
+| `SLACKUSER`              | To be marked in the message. Got to `Show Profile` -> `Click on the 3 Dots` -> `Copy your User ID`, e.g `U02FJAF8B`      |
 
 `Relevant Links`         
 + Billomat ID: https://www.billomat.com/support/faq/einstellungen/erklaerung-der-billomat-id/ 
