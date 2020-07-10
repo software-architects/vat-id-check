@@ -4,10 +4,10 @@
 
 ## Introduction
 
-This project ckecks the correctness of the data you use to create an invoice via Billomat.
-If the `UST_ID`, `company name`, `company address` are not correct, for example if you have a typo, you receive a message via slack in an certain channel you can configure.
-You also receive an `OK` message of the whole data, if it's correct.
-If you do't want to, you can enable it in the configuration.
+This project ckecks the correctness of the data you use to create an invoice via Billomat.<br>
+If the `UST_ID`, `company name`, `company address` are not correct, for example if you have a typo, you receive a message via slack in an certain channel you can configure<br>
+You also receive an `OK` message of the whole data, if it's correct.<br>
+If you do't want to, you can enable it in the configuration.<br>
 
 ![VatCheckReceive](https://github.com/software-architects/vat-id-check/blob/master/img/vatcheckreceive.png)
 
@@ -17,17 +17,17 @@ Basically you use a Billomat Webhook to send data on an certain event (invoice c
 ## Billomat
 
 To create a Webhook go to
-`Settings`-> `Administration` -> `Webhooks` -> `New Webook`
-Insert in the URL slot this URL `https://vatidchecker.azurewebsites.net/api/VatIDCheck` and the `application/json` format
+`Settings`-> `Administration` -> `Webhooks` -> `New Webook`<br>
+Insert in the URL slot this URL `https://vatidchecker.azurewebsites.net/api/VatIDCheck` and the `application/json` format.<br>
 
 A Webhook is used to invoke the inserted URL, if an event happens. In our case it's if you create an invoice.
 
 ## Slack Slash Command
 
-To use our slack slash command you have to be in the same channel you configured with the `SLACKCHANNEL` parameter.
-Just type `/vatchecker {UST_ID}`. 
-Insert the UST_ID you want to check and press `Enter`.
-The slackbot sends this UST_ID to the same eu_validation program as before and slack displays the `UST_ID`, `company name` and `company address`
+To use our slack slash command you have to be in the same channel you configured with the `SLACKCHANNEL` parameter.<br>
+Just type `/vatchecker {UST_ID}`. <br>
+Insert the UST_ID you want to check and press `Enter`.<br>
+The slackbot sends this UST_ID to the same eu_validation program as before and slack displays the `UST_ID`, `company name` and `company address`<br>
 
 e.g. 
 ![SlackBotSend](https://github.com/software-architects/vat-id-check/blob/master/img/slackbotsend.png)
