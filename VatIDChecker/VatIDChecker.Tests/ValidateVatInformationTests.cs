@@ -11,7 +11,7 @@ namespace VatIDChecker.Tests
         {
             // Prepare
             var factory = Mock.Of<IHttpClientFactory>();
-            var checker = new VatIDCheck(factory);
+            var checker = new VatIDCheck(factory, null);
 
             // Execute
             var (userResponse, foundError) = checker.ValidateVatInformation(
@@ -28,7 +28,7 @@ namespace VatIDChecker.Tests
         {
             // Prepare
             var factory = Mock.Of<IHttpClientFactory>();
-            var checker = new VatIDCheck(factory);
+            var checker = new VatIDCheck(factory, null);
 
             // Execute
             var (userResponse, foundError) = checker.ValidateVatInformation(
@@ -51,7 +51,7 @@ namespace VatIDChecker.Tests
         {
             // Prepare
             var factory = Mock.Of<IHttpClientFactory>();
-            var checker = new VatIDCheck(factory);
+            var checker = new VatIDCheck(factory, null);
 
             // Execute
             var (userResponse, foundError) = checker.ValidateVatInformation(
@@ -74,7 +74,7 @@ namespace VatIDChecker.Tests
         {
             // Prepare
             var factory = Mock.Of<IHttpClientFactory>();
-            var checker = new VatIDCheck(factory);
+            var checker = new VatIDCheck(factory, null);
 
             // Execute
             var (userResponse, foundError) = checker.ValidateVatInformation(
@@ -98,7 +98,7 @@ namespace VatIDChecker.Tests
         {
             // Prepare
             var factory = Mock.Of<IHttpClientFactory>();
-            var checker = new VatIDCheck(factory);
+            var checker = new VatIDCheck(factory, null);
 
             // Execute
             var (userResponse, foundError) = checker.ValidateVatInformation(
@@ -122,7 +122,7 @@ namespace VatIDChecker.Tests
         {
             // Prepare
             var factory = Mock.Of<IHttpClientFactory>();
-            var checker = new VatIDCheck(factory);
+            var checker = new VatIDCheck(factory, null);
 
             // Execute
             var (userResponse, foundError) = checker.ValidateVatInformation(
@@ -146,7 +146,7 @@ namespace VatIDChecker.Tests
         {
             // Prepare
             var factory = Mock.Of<IHttpClientFactory>();
-            var checker = new VatIDCheck(factory);
+            var checker = new VatIDCheck(factory, null);
 
             // Execute
             var (userResponse, foundError) = checker.ValidateVatInformation(
@@ -169,7 +169,7 @@ namespace VatIDChecker.Tests
         {
             // Prepare
             var factory = Mock.Of<IHttpClientFactory>();
-            var checker = new VatIDCheck(factory);
+            var checker = new VatIDCheck(factory, null);
 
             // Execute
             var (userResponse, foundError) = checker.ValidateVatInformation(
@@ -193,7 +193,7 @@ namespace VatIDChecker.Tests
         {
             // Prepare
             var factory = Mock.Of<IHttpClientFactory>();
-            var checker = new VatIDCheck(factory);
+            var checker = new VatIDCheck(factory, null);
 
             // Execute
             var (userResponse, foundError) = checker.ValidateVatInformation(
