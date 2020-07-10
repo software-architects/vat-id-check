@@ -13,7 +13,6 @@ If you don't want to, you can enable it in the configuration.<br>
 
 ### How does it work?
 Basically you use a Billomat Webhook to send data from a certain event (invoice create) to our program, which sends the data to a eu_validation program and validates the received data with the user's inserted one.<br>
-Then
 
 ## Billomat
 
