@@ -28,11 +28,6 @@ namespace VatIDChecker
             this.factory = factory;
         }
 
-        public VatIDCheck(IHttpClientFactory factory)
-        {
-            this.factory = factory;
-        }
-
         [FunctionName("VatIDCheck")]
         public async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req,

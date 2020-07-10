@@ -30,7 +30,6 @@ namespace VatIDChecker
     {
         public Tax tax { get; set; }
     }
-
     public class Invoice
     {
         public string id { get; set; }
