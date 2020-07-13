@@ -10,7 +10,6 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using System.Web.Http;
 using System.Xml.Linq;
 
 namespace VatIDChecker
@@ -41,8 +40,8 @@ namespace VatIDChecker
                     log.LogError("Cannot find client id in JSON body.");
                     return new BadRequestResult();
                 }
-
-                var billomatClient = await GetClientFromBillomat(clientId);
+                
+                var billomatClient = await GetClientFromBillomat(clientId, log);
                 var countryCode = billomatClient.country_code;
                 var vatNumber = billomatClient.vat_number.Substring(2).Replace(" ", string.Empty);
                 var clientName = billomatClient.name;
@@ -69,15 +68,17 @@ namespace VatIDChecker
                 var sendSlackMessageOnSuccess = Environment.GetEnvironmentVariable("SENDMESSAGEONSUCCESS", EnvironmentVariableTarget.Process);
                 if (foundError || sendSlackMessageOnSuccess == "true")
                 {
-                    await PostToSlack(userResponse);
+                    await PostToSlack(userResponse, log);
                 }
 
                 return new OkObjectResult(userResponse);
             }
             catch (Exception ex)
             {
-                log.LogError(ex, "Error while checking VAT ID");
-                return new InternalServerErrorResult();
+                const string sendError = "Error while checking VAT ID";
+                log.LogError(ex, sendError);
+                await PostToSlack(sendError, log);
+                return new OkResult();
             }
         }
 
@@ -147,12 +148,13 @@ namespace VatIDChecker
             var clientId = invoiceObject?.invoice?.client_id;
             return clientId;
         }
-        private async Task<string> PostToSlack(string var)
+        private async Task<string> PostToSlack(string var, ILogger log)
         {
             var urlSlack = @"https://slack.com/api/chat.postMessage";
             var slackAuthorization = Environment.GetEnvironmentVariable("SLACKAUTHORIZATIONKEY", EnvironmentVariableTarget.Process);
             var slackChannel = Environment.GetEnvironmentVariable("SLACKCHANNEL", EnvironmentVariableTarget.Process);
             var slackUser = Environment.GetEnvironmentVariable("SLACKUSER", EnvironmentVariableTarget.Process);
+            const string sendError = "Bad request, check your configurations and Webhook";
 
             var slackPostRequest = new HttpRequestMessage
             {
@@ -168,12 +170,18 @@ namespace VatIDChecker
             };
 
             var postResponse = await client.SendAsync(slackPostRequest);
+
+            if (!postResponse.IsSuccessStatusCode)
+            {
+                log.LogError(sendError);
+                await PostToSlack(sendError, log);
+            }
             postResponse.EnsureSuccessStatusCode();
             var postContent = postResponse.Content;
             var postXmlContent = postContent.ReadAsStringAsync().Result;
             return postXmlContent;
         }
-        private async Task<Client> GetClientFromBillomat(string clientId)
+        private async Task<Client> GetClientFromBillomat(string clientId, ILogger log)
         {
             // Billomat GET Request. For details see https://www.billomat.com/api/kunden/.
             // URL: https://{BillomatID}.billomat.net/api/clients/{string}
@@ -181,7 +189,7 @@ namespace VatIDChecker
             var apiKey = Environment.GetEnvironmentVariable("APIKEY", EnvironmentVariableTarget.Process);
             var billomatID = Environment.GetEnvironmentVariable("BILLOMATID", EnvironmentVariableTarget.Process);
             var urlClient = $"https://{billomatID}.billomat.net/api/clients/{clientId}";
-
+            const string sendError = "Bad request, check your configurations and Webhook";
 
             // Send Header Information via await client.SendAsync(webGetRequest)
             var webGetRequest = new HttpRequestMessage
@@ -195,15 +203,20 @@ namespace VatIDChecker
                     { "Timeout", "1000000000"},
                 },
             };
-
             using var getResponse = await client.SendAsync(webGetRequest);
-            getResponse.EnsureSuccessStatusCode();
+
+            if (!getResponse.IsSuccessStatusCode)
+            {
+                log.LogError(sendError);
+                await PostToSlack(sendError, log);
+            }
 
             var getContent = getResponse.Content;
             var getJsonContent = getContent.ReadAsStringAsync().Result;
 
             return JsonSerializer.Deserialize<ClientObject>(getJsonContent).client;
         }
+
     }
 }
 
