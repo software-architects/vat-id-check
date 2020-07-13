@@ -6,7 +6,7 @@
 
 This project ckecks the correctness of the data you use to create an invoice via Billomat.<br>
 If the `UST_ID`, `company name`, `company address` are not correct, for example if you have a typo, you receive a message via slack in an certain channel you can configure<br>
-You also receive an `OK` message of the whole data, if it's correct.<br>
+If the data is correct you will receive an `OK` message.<br>
 If you don't want to, you can enable it in the configuration.<br>
 
 ![VatCheckReceive](https://github.com/software-architects/vat-id-check/blob/master/img/vatcheckreceive.png)
