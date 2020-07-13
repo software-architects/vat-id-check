@@ -176,6 +176,7 @@ namespace VatIDChecker
                 log.LogError(sendError);
                 await PostToSlack(sendError, log);
             }
+            
             postResponse.EnsureSuccessStatusCode();
             var postContent = postResponse.Content;
             var postXmlContent = postContent.ReadAsStringAsync().Result;
