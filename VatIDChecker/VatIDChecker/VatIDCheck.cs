@@ -89,7 +89,7 @@ namespace VatIDChecker
 
             if (valParam.valid == "true")
             {
-                static string CleanupIdentifier(string id) => id.ToLower().Replace("\n", " ");
+                static string CleanupIdentifier(string id) => id.ToLower().Replace("\n", " ").Replace("ß", "ss");
                 static bool CompareIdentifiers(string euCheck, string input) =>
                     euCheck != null && CleanupIdentifier(euCheck) == CleanupIdentifier(input) && euCheck != "---";
 
