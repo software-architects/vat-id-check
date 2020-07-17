@@ -211,5 +211,29 @@ namespace VatIDChecker.Tests
             Assert.True(foundError);
             Assert.Contains("Incorrect vat-number:", userResponse);
         }
+
+        [Fact]
+        public void SuccessfulValidationCompanyAddressWithS()
+        {
+            // Prepare
+            var factory = Mock.Of<IHttpClientFactory>();
+            var checker = new VatIDCheck(factory, null);
+
+            // Execute
+            var (userResponse, foundError) = checker.ValidateVatInformation(
+                string.Empty, string.Empty, string.Empty, "Musterstraﬂe 1 AT-4210 Gallneukirchen",
+                new ValidationParams
+                {
+                    valid = "true",
+                    name = string.Empty,
+                    address = "Musterstrasse 1 AT-4210 Gallneukirchen",
+                    vatNum = string.Empty,
+                    cCode = string.Empty
+                });
+
+            // Assert
+            Assert.False(foundError);
+            Assert.Contains("Correct address", userResponse);
+        }
     }
 }
