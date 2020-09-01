@@ -34,22 +34,40 @@ namespace VatIDChecker
             {
                 // For details about the structure of the HTTP request sent
                 // from Billomat see https://www.billomat.com/api/webhooks/.
-                var clientId = await GetClientIdFromRequestBody(req.Body);
-                if (string.IsNullOrEmpty(clientId))
+                var (clientId, contactId) = await GetClientIdFromRequestBody(req.Body);
+                if (string.IsNullOrEmpty(clientId) && string.IsNullOrEmpty(contactId))
                 {
-                    log.LogError("Cannot find client id in JSON body.");
+                    log.LogError("Cannot find client/contact id in JSON body.");
                     return new BadRequestResult();
                 }
-                
-                var billomatClient = await GetClientFromBillomat(clientId, log);
-                var countryCode = billomatClient.country_code;
-                var vatNumber = billomatClient.vat_number.Substring(2).Replace(" ", string.Empty);
-                var clientName = billomatClient.name;
-                var street = billomatClient.street;
-                var zip = billomatClient.zip;
-                var city = billomatClient.city;
-                var clientAddress = street + " " + countryCode + "-" + zip + " " + city;
-                
+
+                log.LogInformation($"Got ids: {clientId} - {contactId}");
+
+                string clientAddress = null, countryCode = null, vatNumber = null, clientName = null;
+
+                if (!string.IsNullOrEmpty(contactId))
+                {
+                    var billomatContact = await GetContactFromBillomat(contactId, log);
+                    countryCode = billomatContact.country_code;
+                    vatNumber = billomatContact.vat_number.Substring(2).Replace(" ", string.Empty);
+                    clientName = billomatContact.name;
+                    var street = billomatContact.street;
+                    var zip = billomatContact.zip;
+                    var city = billomatContact.city;
+                    clientAddress = street + " " + countryCode + "-" + zip + " " + city;
+                }
+                else
+                {
+                    var billomatClient = await GetClientFromBillomat(clientId, log);
+                    countryCode = billomatClient.country_code;
+                    vatNumber = billomatClient.vat_number.Substring(2).Replace(" ", string.Empty);
+                    clientName = billomatClient.name;
+                    var street = billomatClient.street;
+                    var zip = billomatClient.zip;
+                    var city = billomatClient.city;
+                    clientAddress = street + " " + countryCode + "-" + zip + " " + city;
+                }
+
                 var xmlContent = await euVatChecker.PostXMLToEU(countryCode, vatNumber);
                 var soapResponse = XDocument.Parse(xmlContent.ToString());
 
@@ -80,6 +98,41 @@ namespace VatIDChecker
                 await PostToSlack(sendError, log);
                 return new OkResult();
             }
+        }
+
+        private async Task<Contact> GetContactFromBillomat(string contactId, ILogger log)
+        {
+            // Billomat GET Request. For details see https://www.billomat.com/en/api/clients/contacts/
+            // URL: https://{BillomatID}.billomat.net/api/contacts/{string}
+
+            var apiKey = Environment.GetEnvironmentVariable("APIKEY", EnvironmentVariableTarget.Process);
+            var billomatID = Environment.GetEnvironmentVariable("BILLOMATID", EnvironmentVariableTarget.Process);
+            var urlContact = $"https://{billomatID}.billomat.net/api/contacts/{contactId}";
+            const string sendError = "Bad request, check your configurations and Webhook";
+
+            var webGetRequest = new HttpRequestMessage
+            {
+                RequestUri = new Uri(urlContact),
+                Method = HttpMethod.Get,
+                Headers = {
+                    { "X-BillomatApiKey", apiKey },
+                    { HttpRequestHeader.ContentType.ToString(), "application/json;charset='utf-8'"},
+                    { HttpRequestHeader.Accept.ToString(), "application/json" },
+                    { "Timeout", "1000000000"},
+                },
+            };
+            using var getResponse = await client.SendAsync(webGetRequest);
+
+            if (!getResponse.IsSuccessStatusCode)
+            {
+                log.LogError(sendError);
+                await PostToSlack(sendError, log);
+            }
+
+            var getContent = getResponse.Content;
+            var getJsonContent = getContent.ReadAsStringAsync().Result;
+
+            return JsonSerializer.Deserialize<ContactObject>(getJsonContent).contact;
         }
 
         internal (string userResponse, bool foundError) ValidateVatInformation(string countryCode, string vatNumber, string clientName, string clientAddress, ValidationParams valParam)
@@ -141,13 +194,16 @@ namespace VatIDChecker
 
             return (userResponse, foundError);
         }
-        private async Task<string> GetClientIdFromRequestBody(Stream body)
+
+        private async Task<(string clientId, string contactId)> GetClientIdFromRequestBody(Stream body)
         {
             var requestBody = await new StreamReader(body).ReadToEndAsync();
             var invoiceObject = JsonSerializer.Deserialize<InvoiceObject>(requestBody);
             var clientId = invoiceObject?.invoice?.client_id;
-            return clientId;
+            var contactId = invoiceObject?.invoice?.contact_id;
+            return (clientId, contactId);
         }
+
         private async Task<string> PostToSlack(string var, ILogger log)
         {
             var urlSlack = @"https://slack.com/api/chat.postMessage";
@@ -176,12 +232,13 @@ namespace VatIDChecker
                 log.LogError(sendError);
                 await PostToSlack(sendError, log);
             }
-            
+
             postResponse.EnsureSuccessStatusCode();
             var postContent = postResponse.Content;
             var postXmlContent = postContent.ReadAsStringAsync().Result;
             return postXmlContent;
         }
+
         private async Task<Client> GetClientFromBillomat(string clientId, ILogger log)
         {
             // Billomat GET Request. For details see https://www.billomat.com/api/kunden/.
@@ -217,7 +274,6 @@ namespace VatIDChecker
 
             return JsonSerializer.Deserialize<ClientObject>(getJsonContent).client;
         }
-
     }
 }
 

@@ -148,4 +148,26 @@ namespace VatIDChecker
         public string customfield { get; set; }
         public string client_property_values { get; set; }
     }
+
+    public class ContactObject
+    {
+        public Contact contact { get; set; }
+    }
+
+    public class Contact
+    {
+        public string id { get; set; }
+
+        public string street { get; set; }
+
+        public string zip { get; set; }
+
+        public string city { get; set; }
+
+        public string name { get; set; }
+
+        public string vat_number { get; set; }
+
+        public string country_code { get; set; }
+    }
 }
