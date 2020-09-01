@@ -45,11 +45,11 @@ namespace VatIDChecker
 
                 string clientAddress = null, countryCode = null, vatNumber = null, clientName = null;
                 var billomatClient = await GetClientFromBillomat(clientId, log);
+                vatNumber = billomatClient?.vat_number?.Substring(2)?.Replace(" ", string.Empty) ?? string.Empty;
                 if (!string.IsNullOrEmpty(contactId))
                 {
                     var billomatContact = await GetContactFromBillomat(contactId, log);
                     countryCode = billomatContact.country_code;
-                    vatNumber = billomatClient.vat_number.Substring(2).Replace(" ", string.Empty);
                     clientName = billomatContact.name;
                     var street = billomatContact.street;
                     var zip = billomatContact.zip;
@@ -59,7 +59,6 @@ namespace VatIDChecker
                 else
                 {
                     countryCode = billomatClient.country_code;
-                    vatNumber = billomatClient.vat_number.Substring(2).Replace(" ", string.Empty);
                     clientName = billomatClient.name;
                     var street = billomatClient.street;
                     var zip = billomatClient.zip;
