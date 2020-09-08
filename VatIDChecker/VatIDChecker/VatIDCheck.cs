@@ -154,7 +154,7 @@ namespace VatIDChecker
                 }
                 else
                 {
-                    userResponse += $"\nIncorrect company name: {CleanupIdentifier(clientName)} - expected: {CleanupIdentifier(valParam.name)}";
+                    userResponse += $"\nIncorrect company name: {CleanupIdentifier(clientName)} - expected (VIES): {CleanupIdentifier(valParam.name)}";
                     foundError |= true;
                 }
 
@@ -167,7 +167,7 @@ namespace VatIDChecker
                 }
                 else
                 {
-                    userResponse += $"\nIncorrect address: {CleanupIdentifier(clientAddress)} - expected: {CleanupIdentifier(valParam.address)}";
+                    userResponse += $"\nIncorrect address: {CleanupIdentifier(clientAddress)} - expected (VIES): {CleanupIdentifier(valParam.address)}";
                     foundError |= true;
                 }
 
