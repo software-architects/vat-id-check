@@ -80,10 +80,10 @@ namespace VatIDChecker
                     return new NotFoundObjectResult("Cannot find vat information of company" + clientName);
                 }
 
-                (var userResponse, var foundError) = ValidateVatInformation(countryCode, vatNumber, clientName, clientAddress, valParam);
+                var sendSlackMessageOnSuccess = Environment.GetEnvironmentVariable("SENDMESSAGEONSUCCESS", EnvironmentVariableTarget.Process) == "true";
+                (var userResponse, var foundError) = ValidateVatInformation(countryCode, vatNumber, clientName, clientAddress, valParam, sendSlackMessageOnSuccess);
 
-                var sendSlackMessageOnSuccess = Environment.GetEnvironmentVariable("SENDMESSAGEONSUCCESS", EnvironmentVariableTarget.Process);
-                if (foundError || sendSlackMessageOnSuccess == "true")
+                if (foundError || sendSlackMessageOnSuccess)
                 {
                     await PostToSlack(userResponse, log);
                 }
@@ -134,7 +134,7 @@ namespace VatIDChecker
             return JsonSerializer.Deserialize<ContactObject>(getJsonContent).contact;
         }
 
-        internal (string userResponse, bool foundError) ValidateVatInformation(string countryCode, string vatNumber, string clientName, string clientAddress, ValidationParams valParam)
+        internal (string userResponse, bool foundError) ValidateVatInformation(string countryCode, string vatNumber, string clientName, string clientAddress, ValidationParams valParam, bool messageOnSuccess = true)
         {
             var userResponse = string.Empty;
             bool foundError = false;
@@ -145,7 +145,7 @@ namespace VatIDChecker
                 static bool CompareIdentifiers(string euCheck, string input) =>
                     euCheck != null && CleanupIdentifier(euCheck) == CleanupIdentifier(input) && euCheck != "---";
 
-                if (CompareIdentifiers(valParam.name, clientName))
+                if (CompareIdentifiers(valParam.name, clientName) && messageOnSuccess)
                 {
                     userResponse = "\nCorrect company name: " + CleanupIdentifier(valParam.name);
                 }
@@ -155,7 +155,7 @@ namespace VatIDChecker
                     foundError |= true;
                 }
 
-                if (CompareIdentifiers(valParam.address, clientAddress))
+                if (CompareIdentifiers(valParam.address, clientAddress) && messageOnSuccess)
                 {
                     userResponse += "\nCorrect address: " + CleanupIdentifier(valParam.address);
                 }
@@ -165,9 +165,9 @@ namespace VatIDChecker
                     foundError |= true;
                 }
 
-                if (valParam.cCode != null && valParam.cCode != "---" && valParam.cCode == countryCode)
+                if (valParam.cCode != null && valParam.cCode != "---" && valParam.cCode == countryCode && messageOnSuccess)
                 {
-                    // userResponse += "\nCorrect country code: " + valParam.cCode;
+                    userResponse += "\nCorrect country code: " + valParam.cCode;
                 }
                 else
                 {
@@ -175,9 +175,9 @@ namespace VatIDChecker
                     foundError |= true;
                 }
 
-                if (valParam.vatNum != null && valParam.vatNum != "---" && valParam.vatNum == vatNumber)
+                if (valParam.vatNum != null && valParam.vatNum != "---" && valParam.vatNum == vatNumber && messageOnSuccess)
                 {
-                    // userResponse += "\nCorrect vat-number: " + valParam.vatNum;
+                    userResponse += "\nCorrect vat-number: " + valParam.vatNum;
                 }
                 else
                 {
