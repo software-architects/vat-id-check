@@ -48,6 +48,7 @@ namespace VatIDChecker
                 vatNumber = billomatClient?.vat_number?.Substring(2)?.Replace(" ", string.Empty) ?? string.Empty;
                 if (!string.IsNullOrEmpty(contactId))
                 {
+                    log.LogInformation($"Using contact info instead of client.");
                     var billomatContact = await GetContactFromBillomat(contactId, log);
                     countryCode = billomatContact.country_code;
                     clientName = billomatContact.name;
@@ -150,7 +151,7 @@ namespace VatIDChecker
                 }
                 else
                 {
-                    userResponse += $"\nIncorrect company name: {CleanupIdentifier(valParam.name)} != {CleanupIdentifier(clientName)}";
+                    userResponse += $"\nIncorrect company name: {CleanupIdentifier(clientName)} - expected: {CleanupIdentifier(valParam.name)}";
                     foundError |= true;
                 }
 
@@ -160,27 +161,27 @@ namespace VatIDChecker
                 }
                 else
                 {
-                    userResponse += $"\nIncorrect address: {CleanupIdentifier(valParam.address)} != {CleanupIdentifier(clientAddress)}";
+                    userResponse += $"\nIncorrect address: {CleanupIdentifier(clientAddress)} - expected: {CleanupIdentifier(valParam.address)}";
                     foundError |= true;
                 }
 
                 if (valParam.cCode != null && valParam.cCode != "---" && valParam.cCode == countryCode)
                 {
-                    userResponse += "\nCorrect country code: " + valParam.cCode;
+                    // userResponse += "\nCorrect country code: " + valParam.cCode;
                 }
                 else
                 {
-                    userResponse += $"\nIncorrect country code: {valParam.cCode} != {countryCode}";
+                    userResponse += $"\nIncorrect country code: {countryCode} - expected: {valParam.cCode}";
                     foundError |= true;
                 }
 
                 if (valParam.vatNum != null && valParam.vatNum != "---" && valParam.vatNum == vatNumber)
                 {
-                    userResponse += "\nCorrect vat-number: " + valParam.vatNum;
+                    // userResponse += "\nCorrect vat-number: " + valParam.vatNum;
                 }
                 else
                 {
-                    userResponse += $"\nIncorrect vat-number: {valParam.vatNum} != {vatNumber}";
+                    userResponse += $"\nIncorrect vat-number: {vatNumber} - expected: {valParam.vatNum}";
                     foundError |= true;
                 }
             }
