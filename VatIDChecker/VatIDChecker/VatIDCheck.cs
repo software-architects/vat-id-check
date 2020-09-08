@@ -145,9 +145,12 @@ namespace VatIDChecker
                 static bool CompareIdentifiers(string euCheck, string input) =>
                     euCheck != null && CleanupIdentifier(euCheck) == CleanupIdentifier(input) && euCheck != "---";
 
-                if (CompareIdentifiers(valParam.name, clientName) && messageOnSuccess)
+                if (CompareIdentifiers(valParam.name, clientName))
                 {
-                    userResponse = "\nCorrect company name: " + CleanupIdentifier(valParam.name);
+                    if (messageOnSuccess)
+                    {
+                        userResponse = "\nCorrect company name: " + CleanupIdentifier(valParam.name);
+                    }
                 }
                 else
                 {
@@ -155,9 +158,12 @@ namespace VatIDChecker
                     foundError |= true;
                 }
 
-                if (CompareIdentifiers(valParam.address, clientAddress) && messageOnSuccess)
+                if (CompareIdentifiers(valParam.address, clientAddress))
                 {
-                    userResponse += "\nCorrect address: " + CleanupIdentifier(valParam.address);
+                    if (messageOnSuccess)
+                    {
+                        userResponse += "\nCorrect address: " + CleanupIdentifier(valParam.address);
+                    }
                 }
                 else
                 {
@@ -165,9 +171,12 @@ namespace VatIDChecker
                     foundError |= true;
                 }
 
-                if (valParam.cCode != null && valParam.cCode != "---" && valParam.cCode == countryCode && messageOnSuccess)
+                if (valParam.cCode != null && valParam.cCode != "---" && valParam.cCode == countryCode)
                 {
-                    userResponse += "\nCorrect country code: " + valParam.cCode;
+                    if (messageOnSuccess)
+                    {
+                        userResponse += "\nCorrect country code: " + valParam.cCode;
+                    }
                 }
                 else
                 {
@@ -175,9 +184,12 @@ namespace VatIDChecker
                     foundError |= true;
                 }
 
-                if (valParam.vatNum != null && valParam.vatNum != "---" && valParam.vatNum == vatNumber && messageOnSuccess)
+                if (valParam.vatNum != null && valParam.vatNum != "---" && valParam.vatNum == vatNumber)
                 {
-                    userResponse += "\nCorrect vat-number: " + valParam.vatNum;
+                    if (messageOnSuccess)
+                    {
+                        userResponse += "\nCorrect vat-number: " + valParam.vatNum;
+                    }
                 }
                 else
                 {
