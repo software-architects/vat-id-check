@@ -30,7 +30,7 @@ namespace VatIDChecker
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req,
             ILogger log)
         {
-            string clientId = null, contactId = null, vatNumber = null, info = null;
+            string clientId = null, contactId = null, fullVatNumber = null, info = null;
             try
             {
                 // For details about the structure of the HTTP request sent
@@ -51,13 +51,13 @@ namespace VatIDChecker
 
                 log.LogInformation($"Got ids: {info}");
 
-                string clientAddress = null, countryCode = null, clientName = null;
+                string clientAddress = null, countryCode = null, clientName = null, vatNumber = null;
                 var billomatClient = await GetClientFromBillomat(clientId, log);
-                vatNumber = billomatClient?.vat_number ?? string.Empty;
-                if (!string.IsNullOrWhiteSpace(vatNumber) && vatNumber.Length >= 2)
+                fullVatNumber = billomatClient?.vat_number ?? string.Empty;
+                if (!string.IsNullOrWhiteSpace(fullVatNumber) && fullVatNumber.Length >= 2)
                 {
-                    vatNumber = vatNumber.Substring(2).Replace(" ", string.Empty);
-                    info = $"{vatNumber} - {info}";
+                    vatNumber = fullVatNumber.Substring(2).Replace(" ", string.Empty);
+                    info = $"{fullVatNumber} - {info}";
                 }
 
                 if (!string.IsNullOrEmpty(contactId))
