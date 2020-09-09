@@ -30,22 +30,36 @@ namespace VatIDChecker
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req,
             ILogger log)
         {
+            string clientId = null, contactId = null, vatNumber = null, info = null;
             try
             {
                 // For details about the structure of the HTTP request sent
                 // from Billomat see https://www.billomat.com/api/webhooks/.
-                var (clientId, contactId) = await GetClientIdFromRequestBody(req.Body);
+                (clientId, contactId) = await GetClientIdFromRequestBody(req.Body);
                 if (string.IsNullOrEmpty(clientId) && string.IsNullOrEmpty(contactId))
                 {
                     log.LogError("Cannot find client/contact id in JSON body.");
                     return new BadRequestResult();
                 }
 
-                log.LogInformation($"Got ids: {clientId} - {contactId}");
+                info = clientId;
 
-                string clientAddress = null, countryCode = null, vatNumber = null, clientName = null;
+                if (!string.IsNullOrWhiteSpace(contactId))
+                {
+                    info = $"{clientId} - {contactId}";
+                }
+
+                log.LogInformation($"Got ids: {info}");
+
+                string clientAddress = null, countryCode = null, clientName = null;
                 var billomatClient = await GetClientFromBillomat(clientId, log);
-                vatNumber = billomatClient?.vat_number?.Substring(2)?.Replace(" ", string.Empty) ?? string.Empty;
+                vatNumber = billomatClient?.vat_number ?? string.Empty;
+                if (!string.IsNullOrWhiteSpace(vatNumber) && vatNumber.Length >= 2)
+                {
+                    vatNumber = vatNumber.Substring(2).Replace(" ", string.Empty);
+
+                }
+
                 if (!string.IsNullOrEmpty(contactId))
                 {
                     log.LogInformation($"Using contact info instead of client.");
@@ -92,7 +106,7 @@ namespace VatIDChecker
             }
             catch (Exception ex)
             {
-                const string sendError = "Error while checking VAT ID";
+                var sendError = $"Error while checking VAT ID ({info}): {ex.Message}";
                 log.LogError(ex, sendError);
                 await PostToSlack(sendError, log);
                 return new OkResult();
@@ -203,6 +217,11 @@ namespace VatIDChecker
                 foundError |= true;
             }
 
+            if (foundError)
+            {
+                userResponse = $"VIES information does not match for {vatNumber}:\n{userResponse}";
+            }
+
             return (userResponse, foundError);
         }
 
@@ -233,7 +252,7 @@ namespace VatIDChecker
                     { "Timeout", "1000000000" },
                 },
                 Content = new StringContent(
-                    JsonSerializer.Serialize(new { channel = $"{slackChannel}", text = $"{slackUser}{var}" }), Encoding.UTF8, "application/json")
+                    JsonSerializer.Serialize(new { channel = $"{slackChannel}", text = $"{slackUser} {var}" }), Encoding.UTF8, "application/json")
             };
 
             var postResponse = await client.SendAsync(slackPostRequest);
