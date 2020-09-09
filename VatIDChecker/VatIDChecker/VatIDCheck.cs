@@ -57,7 +57,7 @@ namespace VatIDChecker
                 if (!string.IsNullOrWhiteSpace(vatNumber) && vatNumber.Length >= 2)
                 {
                     vatNumber = vatNumber.Substring(2).Replace(" ", string.Empty);
-
+                    info = $"{vatNumber} - {info}";
                 }
 
                 if (!string.IsNullOrEmpty(contactId))
