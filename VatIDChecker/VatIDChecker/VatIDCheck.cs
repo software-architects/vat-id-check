@@ -91,7 +91,8 @@ namespace VatIDChecker
                 {
                     log.LogError("Cannot find vat information of company" + clientName);
 
-                    return new NotFoundObjectResult("Cannot find vat information of company" + clientName);
+                    // do not NotFoundObjectResult here => disables weebhook in billomat
+                    return new OkObjectResult("Cannot find vat information of company" + clientName);
                 }
 
                 var sendSlackMessageOnSuccess = Environment.GetEnvironmentVariable("SENDMESSAGEONSUCCESS", EnvironmentVariableTarget.Process) == "true";
