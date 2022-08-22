@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
+using ServiceReference1;
 using System;
 using System.IO;
 using System.Net;
@@ -81,22 +82,12 @@ namespace VatIDChecker
                     clientAddress = street + " " + countryCode + "-" + zip + " " + city;
                 }
 
-                var xmlContent = await euVatChecker.PostXMLToEU(countryCode, vatNumber);
-                var soapResponse = XDocument.Parse(xmlContent.ToString());
-
-                var valParam = euVatChecker.GetValidEUParam(soapResponse);
-
-                // UST_ID Validation
-                if (string.IsNullOrEmpty(valParam.valid))
-                {
-                    log.LogError("Cannot find vat information of company" + clientName);
-
-                    // do not NotFoundObjectResult here => disables weebhook in billomat
-                    return new OkObjectResult("Cannot find vat information of company" + clientName);
-                }
+                var client = new checkVatPortTypeClient();
+                await client.OpenAsync();
+                var result = await client.checkVatAsync(new checkVatRequest(countryCode, vatNumber));
 
                 var sendSlackMessageOnSuccess = Environment.GetEnvironmentVariable("SENDMESSAGEONSUCCESS", EnvironmentVariableTarget.Process) == "true";
-                (var userResponse, var foundError) = ValidateVatInformation(countryCode, vatNumber, clientName, clientAddress, valParam, sendSlackMessageOnSuccess);
+                (var userResponse, var foundError) = ValidateVatInformation(countryCode, vatNumber, clientName, clientAddress, result, sendSlackMessageOnSuccess);
 
                 if (foundError || sendSlackMessageOnSuccess)
                 {
@@ -149,12 +140,12 @@ namespace VatIDChecker
             return JsonSerializer.Deserialize<ContactObject>(getJsonContent).contact;
         }
 
-        internal (string userResponse, bool foundError) ValidateVatInformation(string countryCode, string vatNumber, string clientName, string clientAddress, ValidationParams valParam, bool messageOnSuccess = true)
+        internal (string userResponse, bool foundError) ValidateVatInformation(string countryCode, string vatNumber, string clientName, string clientAddress, checkVatResponse valParam, bool messageOnSuccess = true)
         {
             var userResponse = string.Empty;
             bool foundError = false;
 
-            if (valParam.valid == "true")
+            if (valParam.valid)
             {
                 static string CleanupIdentifier(string id) => id.ToLower().Replace("\n", " ").Replace("ß", "ss");
                 static bool CompareIdentifiers(string euCheck, string input) =>
@@ -186,35 +177,35 @@ namespace VatIDChecker
                     foundError |= true;
                 }
 
-                if (valParam.cCode != null && valParam.cCode != "---" && valParam.cCode == countryCode)
+                if (valParam.countryCode != null && valParam.countryCode != "---" && valParam.countryCode == countryCode)
                 {
                     if (messageOnSuccess)
                     {
-                        userResponse += "\nCorrect country code: " + valParam.cCode;
+                        userResponse += "\nCorrect country code: " + valParam.countryCode;
                     }
                 }
                 else
                 {
-                    userResponse += $"\nIncorrect country code: {countryCode} - expected: {valParam.cCode}";
+                    userResponse += $"\nIncorrect country code: {countryCode} - expected: {valParam.countryCode}";
                     foundError |= true;
                 }
 
-                if (valParam.vatNum != null && valParam.vatNum != "---" && valParam.vatNum == vatNumber)
+                if (valParam.vatNumber != null && valParam.vatNumber != "---" && valParam.vatNumber == vatNumber)
                 {
                     if (messageOnSuccess)
                     {
-                        userResponse += "\nCorrect vat-number: " + valParam.vatNum;
+                        userResponse += "\nCorrect vat-number: " + valParam.vatNumber;
                     }
                 }
                 else
                 {
-                    userResponse += $"\nIncorrect vat-number: {vatNumber} - expected: {valParam.vatNum}";
+                    userResponse += $"\nIncorrect vat-number: {vatNumber} - expected: {valParam.vatNumber}";
                     foundError |= true;
                 }
             }
             else
             {
-                userResponse = "\nNothing's valid";
+                userResponse = "\nNothing's valid/not found";
                 foundError |= true;
             }
 

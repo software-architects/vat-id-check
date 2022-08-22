@@ -1,0 +1,18 @@
+POST http://localhost:7071/api/VatIDCheck
+
+{
+    "invoice": {
+		"client_id": "997835"
+	}
+}
+
+###
+
+POST http://localhost:7071/api/VatIDCheck
+
+{
+    "invoice": {
+		"client_id": "811889986"
+	}
+}
+

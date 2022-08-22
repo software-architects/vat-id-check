@@ -1,4 +1,5 @@
 using Moq;
+using ServiceReference1;
 using System.Net.Http;
 using Xunit;
 
@@ -16,7 +17,7 @@ namespace VatIDChecker.Tests
             // Execute
             var (userResponse, foundError) = checker.ValidateVatInformation(
                 string.Empty, string.Empty, string.Empty, string.Empty,
-                new ValidationParams { valid = "false" });
+                new checkVatResponse { valid = false });
             
             // Assert
             Assert.True(foundError);
@@ -33,12 +34,13 @@ namespace VatIDChecker.Tests
             // Execute
             var (userResponse, foundError) = checker.ValidateVatInformation(
                 string.Empty, string.Empty, "software\narchitects", string.Empty,
-                new ValidationParams { 
-                    valid = "true", 
+                new checkVatResponse
+                { 
+                    valid = true, 
                     name = "software architects", 
-                    address = string.Empty, 
-                    vatNum = string.Empty, 
-                    cCode = string.Empty 
+                    address = string.Empty,
+                    vatNumber = string.Empty, 
+                    countryCode = string.Empty 
                 });
 
             // Assert
@@ -56,13 +58,13 @@ namespace VatIDChecker.Tests
             // Execute
             var (userResponse, foundError) = checker.ValidateVatInformation(
                 string.Empty, string.Empty, "dummy", string.Empty,
-                new ValidationParams
+                new checkVatResponse
                 {
-                    valid = "true",
+                    valid = true,
                     name = "software architects",
                     address = string.Empty,
-                    vatNum = string.Empty,
-                    cCode = string.Empty
+                    vatNumber = string.Empty,
+                    countryCode = string.Empty
                 });
 
             // Assert
@@ -79,13 +81,13 @@ namespace VatIDChecker.Tests
             // Execute
             var (userResponse, foundError) = checker.ValidateVatInformation(
                 string.Empty, string.Empty, string.Empty, "Musterstrasse 1 AT-4210 Gallneukirchen",
-                new ValidationParams
+                new checkVatResponse
                 {
-                    valid = "true",
+                    valid = true,
                     name = string.Empty,
                     address = "Musterstrasse 1 AT-4210 Gallneukirchen",
-                    vatNum = string.Empty,
-                    cCode = string.Empty
+                    vatNumber = string.Empty,
+                    countryCode = string.Empty
                 });
 
             // Assert
@@ -103,13 +105,13 @@ namespace VatIDChecker.Tests
             // Execute
             var (userResponse, foundError) = checker.ValidateVatInformation(
                 string.Empty, string.Empty, string.Empty, "dummy",
-                new ValidationParams
+                new checkVatResponse
                 {
-                    valid = "true",
+                    valid = true,
                     name = string.Empty,
                     address = "Musterstrasse 1 AT-4210 Gallneukirchen",
-                    vatNum = string.Empty,
-                    cCode = string.Empty
+                    vatNumber = string.Empty,
+                    countryCode = string.Empty
                 });
 
             // Assert
@@ -127,13 +129,13 @@ namespace VatIDChecker.Tests
             // Execute
             var (userResponse, foundError) = checker.ValidateVatInformation(
                 "AT", string.Empty, string.Empty, string.Empty,
-                new ValidationParams
+                new checkVatResponse
                 {
-                    valid = "true",
+                    valid = true,
                     name = string.Empty,
                     address = string.Empty,
-                    vatNum = string.Empty,
-                    cCode = "AT"
+                    vatNumber = string.Empty,
+                    countryCode = "AT"
                 });
 
             // Assert
@@ -151,13 +153,13 @@ namespace VatIDChecker.Tests
             // Execute
             var (userResponse, foundError) = checker.ValidateVatInformation(
                 "---", string.Empty, string.Empty, string.Empty,
-                new ValidationParams
+                new checkVatResponse
                 {
-                    valid = "true",
+                    valid = true,
                     name = string.Empty,
                     address = string.Empty,
-                    vatNum = string.Empty,
-                    cCode = "---"
+                    vatNumber = string.Empty,
+                    countryCode = "---"
                 });
 
             // Assert
@@ -174,13 +176,13 @@ namespace VatIDChecker.Tests
             // Execute
             var (userResponse, foundError) = checker.ValidateVatInformation(
                 string.Empty, "U12345678", string.Empty, string.Empty,
-                new ValidationParams
+                new checkVatResponse
                 {
-                    valid = "true",
+                    valid = true,
                     name = string.Empty,
                     address = string.Empty,
-                    vatNum = "U12345678",
-                    cCode = string.Empty
+                    vatNumber = "U12345678",
+                    countryCode = string.Empty
                 });
 
             // Assert
@@ -198,13 +200,13 @@ namespace VatIDChecker.Tests
             // Execute
             var (userResponse, foundError) = checker.ValidateVatInformation(
                 string.Empty, "dummy", string.Empty, string.Empty,
-                new ValidationParams
+                new checkVatResponse
                 {
-                    valid = "true",
+                    valid = true,
                     name = string.Empty,
                     address = string.Empty,
-                    vatNum = "U12345678",
-                    cCode = string.Empty
+                    vatNumber = "U12345678",
+                    countryCode = string.Empty
                 });
 
             // Assert
@@ -222,13 +224,13 @@ namespace VatIDChecker.Tests
             // Execute
             var (userResponse, foundError) = checker.ValidateVatInformation(
                 string.Empty, string.Empty, string.Empty, "Musterstraﬂe 1 AT-4210 Gallneukirchen",
-                new ValidationParams
+                new checkVatResponse
                 {
-                    valid = "true",
+                    valid = true,
                     name = string.Empty,
                     address = "Musterstrasse 1 AT-4210 Gallneukirchen",
-                    vatNum = string.Empty,
-                    cCode = string.Empty
+                    vatNumber = string.Empty,
+                    countryCode = string.Empty
                 });
 
             // Assert
