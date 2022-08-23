@@ -9,6 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VatIDChecker.Tests", "VatID
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Div", "Div", "{C992E230-469B-4677-8B48-120BAFCD3389}"
 	ProjectSection(SolutionItems) = preProject
+		..\.github\workflows\action.yml = ..\.github\workflows\action.yml
 		..\provisioning\connect.ps1 = ..\provisioning\connect.ps1
 		..\provisioning\Deploy-AzTemplate.ps1 = ..\provisioning\Deploy-AzTemplate.ps1
 		..\provisioning\deploy.json = ..\provisioning\deploy.json

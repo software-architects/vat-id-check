@@ -144,6 +144,7 @@ namespace VatIDChecker
         {
             var userResponse = string.Empty;
             bool foundError = false;
+            var empty = "---";
 
             if (valParam.valid)
             {
@@ -160,7 +161,15 @@ namespace VatIDChecker
                 }
                 else
                 {
-                    userResponse += $"\nIncorrect company name: {CleanupIdentifier(clientName)} - expected (VIES): {CleanupIdentifier(valParam.name)}";
+                    if (valParam.name == empty)
+                    {
+                        userResponse += $"\nCould not validate company name: {CleanupIdentifier(clientName)}";
+                    }
+                    else
+                    {
+                        userResponse += $"\nIncorrect company name: {CleanupIdentifier(clientName)} - expected (VIES): {CleanupIdentifier(valParam.name)}";
+                    }
+
                     foundError |= true;
                 }
 
@@ -173,7 +182,15 @@ namespace VatIDChecker
                 }
                 else
                 {
-                    userResponse += $"\nIncorrect address: {CleanupIdentifier(clientAddress)} - expected (VIES): {CleanupIdentifier(valParam.address)}";
+                    if (valParam.address == empty)
+                    {
+                        userResponse += $"\nCould not validate address: {CleanupIdentifier(clientAddress)}";
+                    }
+                    else
+                    {
+                        userResponse += $"\nIncorrect address: {CleanupIdentifier(clientAddress)} - expected (VIES): {CleanupIdentifier(valParam.address)}";
+                    }
+
                     foundError |= true;
                 }
 
@@ -190,6 +207,7 @@ namespace VatIDChecker
                     foundError |= true;
                 }
 
+                // TODO review if/how this could even happen
                 if (valParam.vatNumber != null && valParam.vatNumber != "---" && valParam.vatNumber == vatNumber)
                 {
                     if (messageOnSuccess)
